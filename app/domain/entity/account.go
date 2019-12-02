@@ -1,12 +1,12 @@
 package entity
 
 // Account represents an messaging account. Email should be unique
-type AccountID_t int64
+type AccountID_t uint64
 type Account struct {
 	id        AccountID_t
 	email     string    
-	firstName string
-	lastName  string
+	FirstName string
+	LastName  string
 }
 
 //How to create a new account verifying the email is unique
@@ -33,11 +33,11 @@ func (a *Account) GetEmail() string {
 }
 
 func (a *Account) GetFirstName() string {
-	return a.firstName
+	return a.FirstName
 }
 
 func (a *Account) GetLastName() string {
-	return a.lastName
+	return a.LastName
 }
 
 // NewAccounts instanties a slice of new Accounts

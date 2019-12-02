@@ -9,5 +9,6 @@ type AccountRepo interface {
 	Delete(a *entity.Account) error
 
 	Retrieve(email string) (*entity.Account, error)
+	RetrieveCount() (int, error)
 	RetrieveAll() ([]*entity.Account, error)
 }

@@ -6,6 +6,7 @@ import (
 )
 
 // mockRepo ---
+// Note for testing only doesn't do any locking 
 type accountRepo struct {
 	m map[string]*entity.Account
 }
@@ -31,6 +32,10 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
 	} else {		
 		return nil, nil
 	}
+}
+
+func (r *accountRepo) RetrieveCount() (int, error) {
+	return len(r.m), nil
 }
 
 func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
