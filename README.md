@@ -27,7 +27,7 @@ There are 3 regions separated by boundaries.
     * The major usecases of system revolve around Messaging, Account management, Profile management.
     * Add more details about the usecases...could be its own section.
 
-* [/IO contains the IO details of the system. Implementations of the interfaces defined in domain/repo are found here.
+* [/IO]() contains the IO details of the system. Implementations of the interfaces defined in domain/repo are found here.
   * [./storage]()  implementation for the {Domain | Storage} and {Usecase | Storage} boundaries
     * [./ram]()    ram based inmemory implementation of the domain repos for testing and demos
     * [./mdb]()    mongodb implementations of the domain repos. Not yet implemented
