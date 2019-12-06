@@ -1,23 +1,26 @@
 version: '3'
 services:
-	server:
-		#build: ./app
-		environment:
-			APP_SERVER_PORT: ${APP_SERVER_PORT}
-		expose: 
-			- ${APP_SERVER_PORT}
-		ports:
-			- ${APP_SERVER_PORT}:${APP_SERVER_PORT}
-		command: ./app/msgserver
+    server:
+        env_file:
+            - .env
+        build: ./app
+        environment:
+            APP_SERVER_PORT: ${APP_SERVER_PORT}
+        expose: 
+            - ${APP_SERVER_PORT}
+        ports:
+            - ${APP_SERVER_PORT}:${APP_SERVER_PORT}
+        command: ./app/msgserver
 #	
-#	client:
-#		image: react
-#		#build: ./client
-#		environment:
-#			- REACT_APP_PORT=${REACT_APP_PORT}
-#		expose:
-#			- ${REACT_APP_PORT}
-#		ports:
-#			- ${REACT_APP_PORT}:${REACT_APP_PORT}
-#		links:
-#			- server
+#    client:
+#        env_file:
+#            - .env
+#        build: ./client
+#        environment:
+#            - REACT_APP_PORT=${REACT_APP_PORT}
+#        expose:
+#            - ${REACT_APP_PORT}
+#        ports:
+#            - ${REACT_APP_PORT}:${REACT_APP_PORT}
+#        links:
+#            - server

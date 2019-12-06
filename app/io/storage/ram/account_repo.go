@@ -4,6 +4,7 @@ import (
     "fmt"
     "sync"
     "strconv"
+    "sort"
     "github.com/git-sim/tc/app/domain/entity"
 )
 
@@ -49,7 +50,7 @@ func (r *accountRepo) Update(a *entity.Account) error {
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
-    if val , ok := r.accounts[a.GetEmail()]; ok {
+    if _ , ok := r.accounts[a.GetEmail()]; ok {
         r.accounts[a.GetEmail()] = &Account{
             ID:    string(a.GetID()),
             Email: a.GetEmail(),
@@ -75,15 +76,15 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
-    val, ok := r.accounts[email]
+    account, ok := r.accounts[email]
     if ok {
         id, err := strconv.ParseInt(account.ID,10,64);
         if err == nil {
-            return entity.NewAccount(id, account.Email), nil
+            return entity.NewAccount(entity.AccountID_t(id), account.Email), nil
         } else {
             return nil, err
         }
-    }   
+    }
     return nil, nil
 }
 
@@ -98,10 +99,18 @@ func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
     defer r.mtx.Unlock()
 
     accounts := make([]*entity.Account, len(r.accounts))
-    for i , account := range r.accounts {
-        id, err := strconv.ParseInt(account.ID,10,64);
-        if err == nil {
-            accounts[i] = entity.NewAccount(id, account.Email)
+    keys := make([]string,len(r.accounts))
+    for k,_ := range r.accounts {
+        keys = append(keys, k)
+    }
+    sort.Strings(keys)
+    var i int = 0
+    for _,k := range keys {
+	account := r.accounts[k]
+        id, err := strconv.ParseInt(account.ID,10,64)
+	if err == nil {
+	    accounts[i] = entity.NewAccount(entity.AccountID_t(id), account.Email)
+            i++
         }
     }
     return accounts, nil
