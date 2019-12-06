@@ -6,7 +6,7 @@
 The environment params (Ports and options) are setup in the .env file. Use docker-compose to start up both containers. 
 Download this github repo, cd into the directory containing the toplevel docker-compose.yml and call
 ``` bash
-docker-compose up
+sudo docker-compose up -d
 ```
 Then access the frontend client to setup an account and start sending messages. 
 
