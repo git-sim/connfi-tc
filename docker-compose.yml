@@ -1,15 +1,14 @@
 version: '3'
-#services:
-#	server:
-#		image: golang
-#		#build: ./app
-#		environment:
-#			APP_SERVER_PORT: ${APP_SERVER_PORT}
-#		expose: 
-#			- ${APP_SERVER_PORT}
-#		ports:
-#			- ${APP_SERVER_PORT}:${APP_SERVER_PORT}
-#		command: ./app/bin/msg
+services:
+	server:
+		#build: ./app
+		environment:
+			APP_SERVER_PORT: ${APP_SERVER_PORT}
+		expose: 
+			- ${APP_SERVER_PORT}
+		ports:
+			- ${APP_SERVER_PORT}:${APP_SERVER_PORT}
+		command: ./app/msgserver
 #	
 #	client:
 #		image: react

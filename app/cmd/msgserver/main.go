@@ -6,7 +6,7 @@ import (
     _ "github.com/git-sim/tc/app/domain/entity"
     _ "github.com/git-sim/tc/app/usecase"
     _ "github.com/git-sim/tc/app/io/storage/ram"
-    _ "github.com/git-sim/tc/app/io/rest"
+#    _ "github.com/git-sim/tc/app/io/rest"
 	"net/http"
 	
 )
