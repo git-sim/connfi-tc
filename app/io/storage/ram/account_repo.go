@@ -3,6 +3,7 @@ package ram
 import (
 	"fmt"
     "sync"
+	"strconv"
     "github.com/git-sim/tc/app/domain/entity"
 )
 
@@ -76,8 +77,12 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
 
     for _ , account := range r.accounts {
         if account.Email == email {
-            return entity.NewAccount(entity.AccountID_t(account.ID), account.Email), nil
-        }
+		id, err := strconv.ParseInt(account.ID,10,64);
+		if err == nil {
+            return entity.NewAccount(id, account.Email), nil
+        } else {
+			return nil, err
+		}
     }
     return nil, nil
 }
@@ -92,9 +97,12 @@ func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
-    accounts := make([]*entity.Accounts, len(r.accounts))
+    accounts := make([]*entity.Account, len(r.accounts))
     for i , account := range r.accounts {
-        accounts[i] = entity.NewAccount(entity.AccountID_t(account.ID), account.Email)
+		id, err := strconv.ParseInt(account.ID,10,64);
+		if err == nil {
+			accounts[i] = entity.NewAccount(id, account.Email)
+		}
     }
     return accounts, nil
 }
