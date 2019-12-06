@@ -75,15 +75,15 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
-    for _ , account := range r.accounts {
-        if account.Email == email {
+	val, ok := r.accounts[email]
+	if ok {
 		id, err := strconv.ParseInt(account.ID,10,64);
 		if err == nil {
             return entity.NewAccount(id, account.Email), nil
         } else {
 			return nil, err
 		}
-    }
+	}	
     return nil, nil
 }
 
