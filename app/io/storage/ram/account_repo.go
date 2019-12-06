@@ -1,9 +1,9 @@
 package ram
 
 import (
-	"fmt"
+    "fmt"
     "sync"
-	"strconv"
+    "strconv"
     "github.com/git-sim/tc/app/domain/entity"
 )
 
@@ -27,10 +27,10 @@ func NewAccountRepo() *accountRepo {
 }
 
 func (r *accountRepo) Create(a *entity.Account) error {
-	if(a == nil) {
-		return fmt.Errorf("Invalid *entity.Account")
-	}
-	
+    if(a == nil) {
+        return fmt.Errorf("Invalid *entity.Account")
+    }
+    
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
@@ -42,55 +42,55 @@ func (r *accountRepo) Create(a *entity.Account) error {
 }
 
 func (r *accountRepo) Update(a *entity.Account) error {
-	if(a == nil) {
-		return fmt.Errorf("Invalid *entity.Account")
-	}
+    if(a == nil) {
+        return fmt.Errorf("Invalid *entity.Account")
+    }
 
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
-	if val , ok := r.accounts[a.GetEmail()]; ok {
-		r.accounts[a.GetEmail()] = &Account{
-			ID:    string(a.GetID()),
-			Email: a.GetEmail(),
-		}
-		return nil
-	} else {
-		return fmt.Errorf("Update error: entity.Account doesn't exist")
+    if val , ok := r.accounts[a.GetEmail()]; ok {
+        r.accounts[a.GetEmail()] = &Account{
+            ID:    string(a.GetID()),
+            Email: a.GetEmail(),
+        }
+        return nil
+    } else {
+        return fmt.Errorf("Update error: entity.Account doesn't exist")
     }
 }
 
 func (r *accountRepo) Delete(a *entity.Account) error {
-	if(a == nil) {
-		return fmt.Errorf("Invalid entity.Account")
-	}
-	
+    if(a == nil) {
+        return fmt.Errorf("Invalid entity.Account")
+    }
+    
     r.mtx.Lock()
     defer r.mtx.Unlock()
-	delete(r.accounts, a.GetEmail())
-	return nil
+    delete(r.accounts, a.GetEmail())
+    return nil
 }
 
 func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
     r.mtx.Lock()
     defer r.mtx.Unlock()
 
-	val, ok := r.accounts[email]
-	if ok {
-		id, err := strconv.ParseInt(account.ID,10,64);
-		if err == nil {
+    val, ok := r.accounts[email]
+    if ok {
+        id, err := strconv.ParseInt(account.ID,10,64);
+        if err == nil {
             return entity.NewAccount(id, account.Email), nil
         } else {
-			return nil, err
-		}
-	}	
+            return nil, err
+        }
+    }   
     return nil, nil
 }
 
 func (r *accountRepo) RetrieveCount() (int, error) {
     r.mtx.Lock()
     defer r.mtx.Unlock()
-	return len(r.accounts), nil
+    return len(r.accounts), nil
 }
 
 func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
@@ -99,10 +99,10 @@ func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
 
     accounts := make([]*entity.Account, len(r.accounts))
     for i , account := range r.accounts {
-		id, err := strconv.ParseInt(account.ID,10,64);
-		if err == nil {
-			accounts[i] = entity.NewAccount(id, account.Email)
-		}
+        id, err := strconv.ParseInt(account.ID,10,64);
+        if err == nil {
+            accounts[i] = entity.NewAccount(id, account.Email)
+        }
     }
     return accounts, nil
 }
