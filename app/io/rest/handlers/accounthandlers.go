@@ -21,7 +21,7 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 				return
             }
             w.WriteHeader(http.StatusCreated)
-	    fmt.Fprintf(w,"Created %s Err was %s",email,err)) //todo debug
+	    fmt.Fprintf(w,"Created %s Err was %s",email,err) //todo debug
         case http.MethodDelete:
             email := r.URL.Query().Get("email")
             if email == "" {
