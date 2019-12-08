@@ -22,7 +22,7 @@ func main() {
 	mux.Handle("/account",    handlers.HandleAccount(accUsecase))
 	mux.Handle("/accountList",handlers.HandleAccountList(accUsecase))
 	
-    if err := http.ListenAndServe(":8080", mux); err != nil {
+    if err := http.ListenAndServe("0.0.0.0:8080", mux); err != nil {
         log.Fatal("ListenAndServer:", err)
     }
 }
