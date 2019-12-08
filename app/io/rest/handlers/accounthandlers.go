@@ -16,11 +16,12 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
                 return
             }
             err := u.RegisterAccount(email)
-            if err != nil {
-                
+            if err != nil {                
                 http.Error(w, "email not found", http.StatusBadRequest)             
+				return
             }
             w.WriteHeader(http.StatusCreated)
+			w.Write("Created %s Err was %s",email,err) //todo debug
         case http.MethodDelete:
             email := r.URL.Query().Get("email")
             if email == "" {
