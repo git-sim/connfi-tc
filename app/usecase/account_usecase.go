@@ -19,6 +19,15 @@ func NewAccountUsecase(repo repo.AccountRepo, service *service.AccountService) *
     }
 }
 
+func (u *accountUsecase) GetAccount(email string) (*Account, error) {
+    acc, err := u.repo.Retrieve(email)
+    if err != nil {
+        return nil, err
+    }
+    out := toAccount([]*entity.Account{acc})
+    return out[0], nil
+}
+
 func (u *accountUsecase) GetAccountList() ([]*Account, error) {
     Accounts, err := u.repo.RetrieveAll()
     if err != nil {
@@ -37,6 +46,17 @@ func (u *accountUsecase) RegisterAccount(email string) error {
     Account := entity.NewAccount(entity.AccountID_t(uid), email)
     if err := u.repo.Create(Account); err != nil {
         return err
+    }
+    return nil
+}
+
+func (u *accountUsecase) DeleteAccount(email string) error {
+    a, err := u.repo.Retrieve(email)
+    if err != nil { 
+        return err
+    }
+    if a != nil {
+        u.repo.Delete(a); 
     }
     return nil
 }

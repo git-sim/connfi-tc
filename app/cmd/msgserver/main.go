@@ -4,17 +4,25 @@ import (
     "fmt"
     "log"
     _ "sync"
-    _ "github.com/git-sim/tc/app/domain/entity"
-    _ "github.com/git-sim/tc/app/usecase"
-    _ "github.com/git-sim/tc/app/io/storage/ram"
-//    _ "github.com/git-sim/tc/app/io/rest"
     "net/http"
+    "github.com/git-sim/tc/app/domain/service"
+    "github.com/git-sim/tc/app/io/storage/ram"
+    "github.com/git-sim/tc/app/io/rest/handlers"
+    "github.com/git-sim/tc/app/usecase"
 )
 
 func main() {
 
     fmt.Println("Hello from msgserver main()")
-    if err := http.ListenAndServe(":8080", nil); err != nil {
-        log.Fatal(err)
+	db         := ram.NewAccountRepo()
+	accServ    := service.NewAccountService(db)
+	accUsecase := usecase.NewAccountUsecase(db, accServ)
+	
+	mux := http.NewServeMux()
+	mux.Handle("/account",    handlers.HandleAccount(accUsecase))
+	mux.Handle("/accountList",handlers.HandleAccountList(accUsecase))
+	
+    if err := http.ListenAndServe(":8080", mux); err != nil {
+        log.Fatal("ListenAndServer:", err)
     }
 }

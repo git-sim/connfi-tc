@@ -1,0 +1,99 @@
+# Set a value
+curl -v -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+
+# Get a value
+curl -v XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
+
+# Create 
+curl -v -XPOST localhost:8080/account?email=alice.smith@mail.com
+curl -v -XPOST -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+
+# Delete
+curl -v -XDELETE localhost:8080/account?email=alice.smith@mail.com
+
+
+
+====
+ACCOUNT:NEW <email>
+curl -v -XPOST localhost:8080/account?email=alice.smith@mail.com
+
+ACCOUNT:DELETE <email|Id>
+curl -v -XDELETE localhost:8080/account?email=alice.smith@mail.com
+curl -v -XDELETE localhost:8080/account?id="abcdefg..."
+  Can return OK, or NotFound, error
+
+ACCOUNT <email>,[field1="<s1>",field2="s2",...]
+curl -v -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+curl -v -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?id="abcdefg"
+  Can return 
+	email|id: ok, or NotFound, error
+  	field*: FieldNotfound, InvalidInput [message saying which field]
+
+ACCOUNT? <email|id>,[field1,field2...]
+curl -v XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
+curl -v XGET -d firstname localhost:8080/account?id="abcdefg"
+  Can return 
+	email|id: ok, or NotFound, error
+  	field*: FieldNotfound [message saying which field]
+
+
+ACCOUNT:CAT?
+  Can return 
+    error
+
+ACCOUNT:SEARCH? <field>,<pattern>
+curl -v XGET -d pattern="ali" localhost:8080/account/search?field="firstname"
+  Can return 
+    error
+    field*: FieldNotfound [message saying which field]
+
+
+====
+//Styles
+
+//Create
+ACCOUNT:NEW <email>
+  POST email="<email>"
+
+//Delete
+ACCOUNT:DELETE <email|id>
+  DELETE email="<email string>"|id="<id string>"
+
+// Update/Put
+ACCOUNT <email|id>,[field1="<s1>",field2="s2",...]
+  PUT email="<email>"|id="<id string>"
+    -d field1="<s1 string>" 
+    -d field2="<s2 string>" ...
+
+  ACCOUNT:FIRSTNAME <email|Id>,<name string>
+  ACCOUNT:LASTNAME <email|Id>,<name string>
+  ACCOUNT:AVATAR <email|Id>,<#binblock image>
+
+// Get
+ACCOUNT? <email|id>,[field1,field...]
+  GET email="<email>"|id="<id string>"
+  -d field1
+  -d field2
+
+  ACCOUNT:FIRSTNAME? <email|Id>
+  ACCOUNT:LASTNAME? <email|Id>
+  <lastname: string
+  ACCOUNT:AVATAR? <email|Id> 
+  <#binblock image
+
+// Get List Get ALL
+ACCOUNT:CAT? 
+<{firstname: string>,<lastname: string>,<id: string>,<avatar: image>},{}
+
+// Get List Search
+ACCOUNT:SEARCH? field1="<s1>"
+<[]string
+    ACCOUNT:CAT:FIRSTNAME?
+    ACCOUNT:CAT:LASTNAME?
+    ACCOUNT:CAT:EMAIL?
+
+ACCOUNT:TYPES? <email|id>,[field1,field...]
+<string, string, string, int64, image[]>
+
+<string, string, string, int64, image[]>
+
