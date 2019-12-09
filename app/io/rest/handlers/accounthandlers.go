@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+    "fmt"
     "net/http"
     "github.com/git-sim/tc/app/usecase"
 )
@@ -18,10 +18,10 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
             err := u.RegisterAccount(email)
             if err != nil {                
                 http.Error(w, "email not found", http.StatusBadRequest)             
-				return
+                return
             }
             w.WriteHeader(http.StatusCreated)
-	    fmt.Fprintf(w,"Created %s Err was %s",email,err) //todo debug
+        fmt.Fprintf(w,"Created %s Err was %s",email,err) //todo debug
         case http.MethodDelete:
             email := r.URL.Query().Get("email")
             if email == "" {
@@ -45,10 +45,10 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
             acc, err := u.GetAccount(email)
             if err != nil {
                 http.Error(w, "email not found", http.StatusNotFound)               
-				return
+                return
             }
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w,"id: %s, email: %s",acc.ID,acc.Email)
+            w.WriteHeader(http.StatusOK)
+            fmt.Fprintf(w,"id: %s, email: %s",acc.ID,acc.Email)
             //w.Write(acc)
                 
         case http.MethodPut:
@@ -73,13 +73,13 @@ func HandleAccountList(u usecase.AccountUsecase) http.Handler {
             accs, err := u.GetAccountList()
             if err != nil {
                 http.Error(w, "email not found", http.StatusNotFound)               
-				return
+                return
             }
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w,"count: %d\n",len(accs))
-			for _, acc := range accs {
-				fmt.Fprintf(w,"id: %s, email: %s\n",acc.ID,acc.Email)
-			}
+            w.WriteHeader(http.StatusOK)
+            fmt.Fprintf(w,"count: %d\n",len(accs))
+            for _, acc := range accs {
+                fmt.Fprintf(w,"id: %s, email: %s\n",acc.ID,acc.Email)
+            }
             //w.Write(acc)
                 
         default:
