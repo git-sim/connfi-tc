@@ -76,7 +76,7 @@ func HandleAccountList(u usecase.AccountUsecase) http.Handler {
 				return
             }
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w,"count: %d",len(accs))
+			fmt.Fprintf(w,"count: %d\n",len(accs))
 			for _, acc := range accs {
 				fmt.Fprintf(w,"id: %s, email: %s\n",acc.ID,acc.Email)
 			}
