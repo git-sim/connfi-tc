@@ -21,7 +21,6 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
                 return
             }
             w.WriteHeader(http.StatusCreated)
-        fmt.Fprintf(w,"Created %s Err was %s",email,err) //todo debug
         case http.MethodDelete:
             email := r.URL.Query().Get("email")
             if email == "" {
@@ -48,7 +47,8 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
                 return
             }
             w.WriteHeader(http.StatusOK)
-            fmt.Fprintf(w,"id: %s, email: %s",acc.ID,acc.Email)
+            _,_ = fmt.Fprintf(w,"id: %s, email: %s, FirstName: %s, LastName: %s\n",
+                acc.ID,acc.Email,acc.FirstName,acc.LastName)
             //w.Write(acc)
                 
         case http.MethodPut:
@@ -76,9 +76,9 @@ func HandleAccountList(u usecase.AccountUsecase) http.Handler {
                 return
             }
             w.WriteHeader(http.StatusOK)
-            fmt.Fprintf(w,"count: %d\n",len(accs))
+            _,_ = fmt.Fprintf(w,"count: %d\n",len(accs))
             for _, acc := range accs {
-                fmt.Fprintf(w,"id: %s, email: %s\n",acc.ID,acc.Email)
+                _,_ = fmt.Fprintf(w,"id: %s, email: %s\n",acc.ID,acc.Email)
             }
             //w.Write(acc)
                 

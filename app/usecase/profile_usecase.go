@@ -1,128 +1,108 @@
 package usecase
 import (
+    "fmt"
     "github.com/git-sim/tc/app/domain/repo"
     "image"
-    "fmt"
+    "log"
 )
 
-
-// Impl of name use case
-const (
-    firstNameEnum int = iota + 1
-    lastNameEnum
-)
-
-type profileNameUsecase struct {
-    whichName   int
+type profileStringUsecase struct {
     profileRepo repo.StringRepo
 }
 
 //Note internal function not exported
-func newProfileNameUsecase(whichName int, nr repo.StringRepo) (*profileNameUsecase, error) {
-    //Todo Is it bad etiquette for Newxxx() functions to return errors?
-    if(nr==nil) {
-        return nil, fmt.Errorf("Invalid repo.StringRepo")
+func NewProfileStringUsecase(nr repo.StringRepo) *profileStringUsecase {
+    // should be an assert
+    if nr==nil {
+        log.Fatal(fmt.Errorf("invalid repo.StringRepo")) 
     }
-    u := &profileNameUsecase {
-            whichName:      firstNameEnum,
-            profileRepo:    nr,
-    }
-    return u,nil
+    u := &profileStringUsecase {profileRepo: nr }
+    return u
 }
 
-func NewProfileFirstNameUsecase(nr repo.StringRepo) (*profileNameUsecase, error) {
-    return newProfileNameUsecase(firstNameEnum, nr)
-}
-
-func NewProfileLastNameUsecase(nr repo.StringRepo) (*profileNameUsecase, error) {
-    return newProfileNameUsecase(lastNameEnum, nr)
-}
-// ... NewProfileMiddleNameUsecase ...
-
-
-func (u *profileNameUsecase) Set(email, val string) error {
-    _ , err := u.profileRepo.Retrieve(email)
-    if(err != nil) {
+func (u *profileStringUsecase) Set(id uint64, val string) error {
+    _ , err := u.profileRepo.Retrieve(id)
+    if err != nil {
         // Create
-        err = u.profileRepo.Create(email, val)
+        err = u.profileRepo.Create(id, val)
     } else {
         // Update
-        err = u.profileRepo.Update(email, val)
+        err = u.profileRepo.Update(id, val)
     }
     return err
 }
 
-func (u *profileNameUsecase) Get(email string) (string, error) {
-    currval , err := u.profileRepo.Retrieve(email)
-    if(err != nil) {
+func (u *profileStringUsecase) Get(id uint64) (string, error) {
+    val , err := u.profileRepo.Retrieve(id)
+    if err != nil {
         return "", err
     }
-    return currval, nil
+    return val, nil
 }
 
-func (u *profileNameUsecase) GetCount() (int, error) {
-    currval , err := u.profileRepo.RetrieveCount()
-    if(err != nil) {
+func (u *profileStringUsecase) GetCount() (int, error) {
+    count , err := u.profileRepo.RetrieveCount()
+    if err != nil {
         return 0, err
     }
-    return currval, nil
+    return count, nil
 }
 
-func (u *profileNameUsecase) GetList() ([]string, error) {
+func (u *profileStringUsecase) GetList() ([]*string, error) {
     currval , err := u.profileRepo.RetrieveAll()
-    if(err != nil) {
-        return []string{}, err
+    if err != nil {
+        return []*string{}, err
     }
     return currval, nil
 }
 
-// Impl of Profile Avatar Usecase   
-type profileAvatarUsecase struct {
+// Impl of Profile Image Usecase
+type profileImageUsecase struct {
     profileRepo    repo.ImageRepo
 }
 
-func NewProfileAvatarUsecase(avr repo.ImageRepo) (*profileAvatarUsecase,error) {
-    //Todo Is it bad etiquette for Newxxx() functions to return errors?
-    if(avr==nil) {
-        return nil, fmt.Errorf("Invalid repo.avatarRepo")
+func NewProfileImageUsecase(ir repo.ImageRepo) *profileImageUsecase {
+    // should be a compile time assert
+    if ir==nil {
+        log.Fatal(fmt.Errorf("invalid repo.ImageRepo"))
     }
-    u := &profileAvatarUsecase {
-        profileRepo: avr,
+    u := &profileImageUsecase {
+        profileRepo: ir,
     }
-    return u,nil
+    return u
 }
 
-func (u *profileAvatarUsecase) Set(email string, val *image.Image) error {
-    _ , err := u.profileRepo.Retrieve(email)
-    if(err != nil) {
+func (u *profileImageUsecase) Set(id uint64, val *image.Image) error {
+    _ , err := u.profileRepo.Retrieve(id)
+    if err != nil  {
         // Create
-        err = u.profileRepo.Create(email, val)
+        err = u.profileRepo.Create(id, val)
     } else {
         // Update
-        err = u.profileRepo.Update(email, val)
+        err = u.profileRepo.Update(id, val)
     }
     return err
 }
 
-func (u *profileAvatarUsecase) Get(email string) (*image.Image, error) {
-    currval , err := u.profileRepo.Retrieve(email)
-    if(err != nil) {
+func (u *profileImageUsecase) Get(id uint64) (*image.Image, error) {
+    currval , err := u.profileRepo.Retrieve(id)
+    if err != nil {
         return nil, err
     }
     return currval, nil
 }
 
-func (u *profileAvatarUsecase) GetCount() (int, error) {
+func (u *profileImageUsecase) GetCount() (int, error) {
     currval , err := u.profileRepo.RetrieveCount()
-    if(err != nil) {
+    if err != nil {
         return 0, err
     }
     return currval, nil
 }
 
-func (u *profileAvatarUsecase) GetList() ([]*image.Image, error) {
+func (u *profileImageUsecase) GetList() ([]*image.Image, error) {
     currval , err := u.profileRepo.RetrieveAll()
-    if(err != nil) {
+    if err != nil {
         return nil, err
     }
     return currval, nil

@@ -60,6 +60,20 @@ func (u *accountUsecase) RegisterAccount(email string) error {
     return nil
 }
 
+func (u *accountUsecase) UpdateNameAccount(email string) error {
+    h := fnv.New64a()
+    h.Write([]byte(email))
+    uid := h.Sum64()
+    if err := u.service.AlreadyExists(email); err == nil {
+        return fmt.Errorf("Account already exists")
+    }
+    Account := entity.NewAccount(entity.AccountID_t(uid), email)
+    if err := u.repo.Create(Account); err != nil {
+        return err
+    }
+    return nil
+}
+
 func (u *accountUsecase) DeleteAccount(email string) error {
     a, err := u.repo.Retrieve(email)
     if err != nil { 
@@ -78,6 +92,8 @@ func toAccount(Accounts []*entity.Account) []*Account {
         res[i] = &Account{
             ID:    strconv.FormatUint(uint64(account.GetID()),16),
             Email: account.GetEmail(),
+            FirstName: account.GetFirstName(),
+            LastName: account.GetLastName(),
         }
     }
     return res

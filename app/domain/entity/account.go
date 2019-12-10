@@ -40,7 +40,7 @@ func (a *Account) GetLastName() string {
     return a.LastName
 }
 
-// NewAccounts instanties a slice of new Accounts
+// NewAccounts instantiates a slice of new Accounts
 func NewAccounts(Emails ...string) []*Account {
     var as []*Account
     for i, email := range Emails {

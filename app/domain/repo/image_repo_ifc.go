@@ -4,11 +4,11 @@ import (
 )
 
 type ImageRepo interface {
-    Create(email string, val *image.Image) error
-    Update(email string, val *image.Image) error
-    Delete(email string) error
+    Create(id uint64, val *image.Image) error
+    Update(id uint64, val *image.Image) error
+    Delete(id uint64) error
 
-    Retrieve(email string) (*image.Image, error)
+    Retrieve(id uint64) (*image.Image, error)
     RetrieveCount() (int, error)
-    RetrieveAll() ([]*image.Image, error)
+    RetrieveAll() ([]*image.Image, error) //todo maybe should return map[uint64]*string so we have id,string info
 }

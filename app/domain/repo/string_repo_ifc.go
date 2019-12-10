@@ -1,11 +1,11 @@
 package repo
 
 type StringRepo interface {
-    Create(email, val string) error
-    Update(email, val string) error
-    Delete(email string) error
+    Create(id uint64, val string) error
+    Update(id uint64, val string) error
+    Delete(id uint64) error
 
-    Retrieve(email string) (string, error)
+    Retrieve(id uint64) (string, error)
     RetrieveCount() (int, error)
-    RetrieveAll() ([]string, error)
+    RetrieveAll() ([]*string, error) //todo maybe should return map[uint64]*string so we have id,string info
 }

@@ -12,4 +12,6 @@ type AccountUsecase interface {
 type Account struct {
     ID    string
     Email string
+    FirstName string
+    LastName string
 }

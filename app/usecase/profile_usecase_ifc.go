@@ -4,17 +4,17 @@ import (
 )
 
 // One interface for first and last name
-type ProfileNameUsecase interface {
-    Set(email, val string) error
-    Get(email string) (string, error)
+type ProfileStringUsecase interface {
+    Set(id uint64, val string) error
+    Get(id uint64) (string, error)
     GetCount() (int, error)
-    GetList()  ([]string, error)
+    GetList()  ([]*string, error)
 }
 
 // Very similar to above just differs on target value type  
-type ProfileAvatarUsecase interface {
-    Set(email string, val *image.Image) error
-    Get(email string) (*image.Image, error)
+type ProfileImageUsecase interface {
+    Set(id uint64, val *image.Image) error
+    Get(id uint64) (*image.Image, error)
     GetCount() (int, error)
     GetList()  ([]*image.Image, error)
 }

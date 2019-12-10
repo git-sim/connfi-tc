@@ -13,6 +13,15 @@ import (
 type Account struct {
     ID    string
     Email string
+    FirstName string
+    LastName string
+}
+// Account.toEntityAccount conversion helper
+func (ra *Account) toEntityAccount(id64 entity.AccountID_t) *entity.Account {
+    ret := entity.NewAccount(id64,ra.Email)
+    ret.FirstName = ra.FirstName
+    ret.LastName = ra.LastName
+    return ret
 }
 
 // Impl of ram based account repository. Just a map[string]*Account
@@ -39,6 +48,8 @@ func (r *accountRepo) Create(a *entity.Account) error {
     r.accounts[a.GetID()] = &Account{
         ID:    GetIDString(a.GetID()),
         Email: a.GetEmail(),
+        FirstName: a.GetFirstName(),
+        LastName: a.GetLastName(),
     }
     return nil
 }
@@ -55,7 +66,8 @@ func (r *accountRepo) Update(a *entity.Account) error {
         r.accounts[a.GetID()] = &Account{
             ID:    GetIDString(a.GetID()),
             Email: a.GetEmail(),
-            //todo add firstname,lastname,avatar
+            FirstName: a.GetFirstName(),
+            LastName: a.GetLastName(),
         }
         return nil
     } else {
@@ -81,7 +93,8 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
 
     for k,v := range r.accounts {
         if(v.Email == email) {
-            return entity.NewAccount(k,v.Email), nil
+            ret := v.toEntityAccount(k)
+            return ret, nil
         }
     }
     return nil,errEmailNotFound
@@ -97,7 +110,8 @@ func (r *accountRepo) RetrieveByID(id string) (*entity.Account, error) {
 
     account, ok := r.accounts[id64]
     if ok {
-        return entity.NewAccount(id64, account.Email), nil
+        ret := account.toEntityAccount(id64)
+        return ret, nil
     }
     return nil, nil
 }
@@ -130,15 +144,17 @@ func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
     var j int = 0
     for _,idEmail := range idEmails {
         account := r.accounts[idEmail.AcctID]
-        accounts[j] = entity.NewAccount(idEmail.AcctID, account.Email)
+        accounts[j] = account.toEntityAccount(idEmail.AcctID)
         j++
     }
     return accounts, nil
 }
 
+// Helpers for conversions
 func GetIDString(id entity.AccountID_t) string {
     return strconv.FormatUint(uint64(id),16)
 }
+
 var errBadId = errors.New("bad ID string, must by uint64 encoded in hex")
 func fromStrToId(s string) (entity.AccountID_t, error) {
     n, err := strconv.ParseUint(s,16,64)
