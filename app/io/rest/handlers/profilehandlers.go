@@ -7,6 +7,10 @@ import (
     "strconv"
 )
 
+// The pattern in this code is String based profile fields then Image based profile fields (others if they come alone)
+// todo split the two in to separate files?
+// Much of the code is very similar, haven't found a way in go to share the code between string and image fields (generics?).
+// This is ok since images and strings don't meet the Liskov Substitutability
 const (
     EnumFirstNameUsecase = iota
     EnumLastNameUsecase
@@ -25,11 +29,6 @@ type ProfileUsecases struct {
     ImageUsecases [EnumNumImageUsecases]usecase.ProfileImageUsecase
 }
 
-type pairFieldEnum struct {
-    field string
-    which int
-}
-
 var StringFields = [...]string {
     "firstname",
     "lastname",
@@ -46,10 +45,9 @@ func parseAndSetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string,
     numParsed = 0
     numErrors = 0
     for i,k := range fields {
-        val := r.URL.Query().Get(k)
-        if val != "" {
+        if val, found := r.Form[k]; found {
+            err := u.StrUsecases[i].Set(id64,val[0])
             numParsed++
-            err := u.StrUsecases[i].Set(id64,val)
             if err != nil {
                 http.Error(w, "err in handleProfile string field",http.StatusBadRequest)
                 numErrors++
@@ -64,8 +62,7 @@ func parseAndGetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string,
     numParsed = 0
     numErrors = 0
     for i,k := range fields {
-        _, ok := r.URL.Query()[k]
-        if ok {
+        if _, found :=  r.Form[k]; found {
             val, err := u.StrUsecases[i].Get(id64)
             numParsed++
             if err != nil {
@@ -73,7 +70,7 @@ func parseAndGetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string,
                 numErrors++
                 // report all errors
             }
-            _,_ = fmt.Fprintf(w, "%s\n", val)
+            _,_ = fmt.Fprintf(w, "%s\n", val)  //todo json instead
         }
     }
     return numParsed, numErrors
@@ -99,9 +96,10 @@ func parseAndGetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string,
 
 func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        email := r.URL.Query().Get("email")
+        r.ParseForm()
+        email := r.FormValue("email")
         if email == "" {
-            http.Error(w, "missing email name in query string", http.StatusBadRequest)
+            http.Error(w, "missing email", http.StatusBadRequest)
             return
         }
         account, err := accu.GetAccount(email)
@@ -135,9 +133,9 @@ func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler
 
         case http.MethodPut:
             numStrsParsed,   numStrsErrors   := parseAndSetStringUsecase(id64,StringFields,u,w,r)
-            numImagesParsed := 0
-            numImagesErrors := 0
-            //numImagesParsed, numImagesErrors := parseAndSetImageUsecase(id64,ImageFields,u,w,r)
+            numImagesParsed := 0 //todo when images are working
+            numImagesErrors := 0 //todo images
+            //numImagesParsed, numImagesErrors := parseAndSetImageUsecase(id64,ImageFields,u,w,r) //todo images
             if (numStrsErrors + numImagesErrors == 0) && (numStrsParsed + numImagesParsed > 0)  {
                 // we parsed at least 1 field, and there were not errors
                 w.WriteHeader(http.StatusOK)
@@ -150,22 +148,42 @@ func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler
     })
 }
 
-func HandleProfileList(u usecase.AccountUsecase) http.Handler {
+func HandleProfileList(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         switch r.Method { 
         case http.MethodGet:
-            accs, err := u.GetAccountList()
+            accs, err := accu.GetAccountList()
             if err != nil {
                 http.Error(w, "email not found", http.StatusNotFound)               
                 return
             }
-            w.WriteHeader(http.StatusOK)
-            _,_ = fmt.Fprintf(w,"count: %d\n",len(accs))
-            for _, acc := range accs {
-                _,_ = fmt.Fprintf(w,"id: %s, email: %s\n",acc.ID,acc.Email)
+            maxcount := len(accs)
+
+            // loop through and return each field requested
+            _, _ = fmt.Fprintf(w, "MaxCount: %d", maxcount)
+            for _, acc := range accs {  //todo need some sensible sorting
+                _,_ = fmt.Fprintf(w,"id: %s, email: %s",acc.ID,acc.Email)
+                for i, field := range StringFields {
+                    if _, found := r.Form[field]; found {
+                        _, _ = fmt.Fprintf(w, ", %s: %s", field, u.StrUsecases[i])
+                    } else {
+                        // field not defined in the profile return a place holder
+                        _, _ = fmt.Fprintf(w, ", %s: %s", field, "")
+                    }
+                }
+                _,_ = fmt.Fprintf(w,"\n") //todo do as json instead of fprinting
+
+                // todo images would go here either multipart/binary/urlencoded however its done in http
+                for /*i*/ _, field := range ImageFields {
+                    if _, found := r.Form[field]; found {
+                        //_,_ = fmt.Fprintf(w,", %s: %s",field,u.ImageUsecases[i])
+                    } else {
+                        // todo no image defined case
+                    }
+                }
+                _,_ = fmt.Fprintf(w,"\n") //todo do as json instead of fprinting
             }
-            //w.Write(acc)
-                
+            w.WriteHeader(http.StatusOK)
         default:
             http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         }

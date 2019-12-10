@@ -2,11 +2,17 @@
 curl -v -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
 
 # Get a value
-curl -v XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
+curl -v -XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
+curl -v -GET localhost:8080/account?email=alice.smith@mail.com 
 
 # Create 
 curl -v -XPOST localhost:8080/account?email=alice.smith@mail.com
+#    The email appears in both the query string and the form body seems formvalue is the way to go.
 curl -v -XPOST -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+
+#    Below works but remember, the email won't be part of the query. 
+#    It will be a form param. Ordering is not guaranteed the -H "Content-type is optional...
+curl -v -XPOST -d "email=Alice5@mail.com&firstname=Alice&lastname=Smith" -H "Content-Type: application/x-www-form-urlencoded" localhost:8080/profile
 
 # Delete
 curl -v -XDELETE localhost:8080/account?email=alice.smith@mail.com

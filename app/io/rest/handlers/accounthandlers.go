@@ -7,14 +7,15 @@ import (
 )
 
 func HandleAccount(u usecase.AccountUsecase) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {  
-        switch r.Method { 
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        r.ParseForm()
+        email := r.FormValue("email")
+        if email == "" {
+            http.Error(w, "missing email in request", http.StatusBadRequest)
+            return
+        }
+        switch r.Method {
         case http.MethodPost:
-            email := r.URL.Query().Get("email")
-            if email == "" {
-                http.Error(w, "missing email name in query string", http.StatusBadRequest)
-                return
-            }
             err := u.RegisterAccount(email)
             if err != nil {                
                 http.Error(w, "email not found", http.StatusBadRequest)             
@@ -22,11 +23,6 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
             }
             w.WriteHeader(http.StatusCreated)
         case http.MethodDelete:
-            email := r.URL.Query().Get("email")
-            if email == "" {
-                http.Error(w, "missing email name in query string", http.StatusBadRequest)
-                return
-            }
             err := u.DeleteAccount(email)
             if err != nil {
                 
@@ -36,11 +32,6 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
             w.WriteHeader(http.StatusOK)    
             
         case http.MethodGet:
-            email := r.URL.Query().Get("email")
-            if email == "" {
-                http.Error(w, "missing email name in query string", http.StatusBadRequest)
-                return
-            }
             acc, err := u.GetAccount(email)
             if err != nil {
                 http.Error(w, "email not found", http.StatusNotFound)               
@@ -52,12 +43,7 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
             //w.Write(acc)
                 
         case http.MethodPut:
-            email := r.URL.Query().Get("email")
-            if email == "" {
-                http.Error(w, "missing email name in query string", http.StatusBadRequest)
-                return
-            }
-            http.Error(w, "Account edit Not impl", http.StatusNotImplemented)               
+            http.Error(w, "Account edit Not impl", http.StatusNotImplemented)
         
         default:
             http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
