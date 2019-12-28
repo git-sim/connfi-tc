@@ -1,12 +1,12 @@
 package entity
 
 // Account represents an messaging account. Email should be unique
-type AccountID_t uint64
+type AccountIDType uint64
 type Account struct {
-    id        AccountID_t
-    email     string    
-    FirstName string
-    LastName  string
+	id        AccountIDType
+	email     string
+	FirstName string
+	LastName  string
 }
 
 //How to create a new account verifying the email is unique
@@ -15,36 +15,35 @@ type Account struct {
 // When created the account will get assigned an inbox (collection of inbox messages)
 // Inbox could start empty or with initial welcome message (from admin).
 
-
-// NewAccount instantiates a new Account. 
-func NewAccount(newid AccountID_t, newemail string) *Account {
-    return &Account {
-        id:        newid,
-        email:     newemail,
-    }
+// NewAccount instantiates a new Account.
+func NewAccount(newid AccountIDType, newemail string) *Account {
+	return &Account{
+		id:    newid,
+		email: newemail,
+	}
 }
 
-func (a *Account) GetID() AccountID_t {
-    return a.id
+func (a *Account) GetID() AccountIDType {
+	return a.id
 }
 
 func (a *Account) GetEmail() string {
-    return a.email
+	return a.email
 }
 
 func (a *Account) GetFirstName() string {
-    return a.FirstName
+	return a.FirstName
 }
 
 func (a *Account) GetLastName() string {
-    return a.LastName
+	return a.LastName
 }
 
 // NewAccounts instantiates a slice of new Accounts
 func NewAccounts(Emails ...string) []*Account {
-    var as []*Account
-    for i, email := range Emails {
-        as = append(as, NewAccount(AccountID_t(i+1), email))
-    }
-    return as
+	var as []*Account
+	for i, email := range Emails {
+		as = append(as, NewAccount(AccountIDType(i+1), email))
+	}
+	return as
 }
