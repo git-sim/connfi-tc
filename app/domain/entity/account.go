@@ -1,13 +1,18 @@
 package entity
 
 // Account represents an messaging account. Email should be unique
-type AccountIDType uint64
 type Account struct {
 	id        AccountIDType
 	email     string
 	FirstName string
 	LastName  string
 }
+
+// AccountIDType specifies the id type
+type AccountIDType uint64
+
+const AccountIDBits = 64
+const AccountIDStringBase = 16
 
 //How to create a new account verifying the email is unique
 // We need a collection of existing accounts.

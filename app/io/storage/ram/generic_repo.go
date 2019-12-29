@@ -27,8 +27,6 @@ func NewGenericRepo() repo.Generic {
 }
 
 func (gr *genericRepo) createOrUpdate(id repo.GenericKeyT, val interface{}) error {
-	gr.mtx.Lock()
-	defer gr.mtx.Unlock()
 	gr.elems[id] = val
 	return nil
 }

@@ -33,10 +33,10 @@ func (u *accountUsecase) GetSession() SessionUsecase {
 func (u *accountUsecase) GetAccount(email string) (*Account, error) {
 	acc, err := u.repo.Retrieve(email)
 	if err != nil {
-		return nil, ErrorNotFound
+		return nil, NewEs(EsNotFound, "Email")
 	}
 	if acc == nil {
-		return nil, ErrorNotFound
+		return nil, NewEs(EsEmpty, "User Account")
 	}
 	out := toAccount([]*entity.Account{acc})
 	return out[0], nil
@@ -50,7 +50,7 @@ func (u *accountUsecase) GetAccountList() ([]*Account, error) {
 	if len(Accounts) > 0 {
 		return toAccount(Accounts), nil
 	}
-	return []*Account{}, ErrorNotFound
+	return []*Account{}, NewEs(EsEmpty, "Accounts")
 }
 
 func (u *accountUsecase) RegisterAccount(email string) (*Account, error) {
@@ -58,7 +58,7 @@ func (u *accountUsecase) RegisterAccount(email string) (*Account, error) {
 	h.Write([]byte(email))
 	uid := h.Sum64()
 	if u.service.AlreadyExists(email) {
-		return nil, fmt.Errorf("Account already exists")
+		return nil, NewEs(EsAlreadyExists, "User Account")
 	}
 	acc := entity.NewAccount(entity.AccountIDType(uid), email)
 	if err := u.repo.Create(acc); err != nil {
@@ -68,15 +68,24 @@ func (u *accountUsecase) RegisterAccount(email string) (*Account, error) {
 	return out[0], nil
 }
 
-func (u *accountUsecase) UpdateNameAccount(email string) error {
-	h := fnv.New64a()
-	h.Write([]byte(email))
-	uid := h.Sum64()
-	if u.service.AlreadyExists(email) {
-		return fmt.Errorf("Account already exists")
+func (u *accountUsecase) UpdateNameAccount(email string, firstname *string, lastname *string) error {
+	a, err := u.repo.Retrieve(email)
+	if err != nil {
+		return err
 	}
-	Account := entity.NewAccount(entity.AccountIDType(uid), email)
-	err := u.repo.Create(Account)
+	if a == nil {
+		return NewEs(EsEmpty,
+			fmt.Sprintf("Account with email %s", email))
+	}
+
+	// leave email and id the same just update the names if they exist
+	if firstname != nil {
+		a.FirstName = *firstname
+	}
+	if lastname != nil {
+		a.LastName = *lastname
+	}
+	err = u.repo.Update(a)
 	return err
 }
 
@@ -96,7 +105,7 @@ func toAccount(Accounts []*entity.Account) []*Account {
 	res := make([]*Account, len(Accounts))
 	for i, account := range Accounts {
 		res[i] = &Account{
-			ID:        strconv.FormatUint(uint64(account.GetID()), 16),
+			ID:        strconv.FormatUint(uint64(account.GetID()), entity.AccountIDStringBase),
 			Email:     account.GetEmail(),
 			FirstName: account.GetFirstName(),
 			LastName:  account.GetLastName(),

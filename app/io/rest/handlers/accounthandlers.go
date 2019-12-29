@@ -9,6 +9,15 @@ import (
 
 func HandleAccount(u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//Always returns a session
+		session, _ := u.GetSession().FromReq(r)
+		// Could do auth here, we're interested in getting the AccountId of the user
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		accIDString := session.Values["id"].(string)
+
 		r.ParseForm()
 		email := r.FormValue("email")
 		if email == "" {
@@ -31,7 +40,6 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 				http.Error(w, "email not found", http.StatusNotFound)
 				return
 			}
-			w.WriteHeader(http.StatusOK)
 
 		case http.MethodGet:
 			acc, err := u.GetAccount(email)
@@ -45,7 +53,35 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 			//w.Write(acc)
 
 		case http.MethodPut:
-			http.Error(w, "Account edit Not impl", http.StatusNotImplemented)
+			acc, err := u.GetAccount(email)
+			if err != nil {
+				http.Error(w, "email not found", http.StatusNotFound)
+				return
+			}
+			// Verify that Check that the logged in account is the one that's making the change
+			if accIDString == acc.ID {
+				// Have to distinguish between an empty name and a non-specified name
+				// Don't change the name if it was nil
+				var pfirstname *string
+				var plastname *string
+				fnval, ok := r.Form["firstname"]
+				if ok {
+					pfirstname = &fnval[0]
+				}
+
+				lnval, ok := r.Form["lastname"]
+				if ok {
+					plastname = &lnval[0]
+				}
+
+				err := u.UpdateNameAccount(email, pfirstname, plastname)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+
+			} else {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+			}
 
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

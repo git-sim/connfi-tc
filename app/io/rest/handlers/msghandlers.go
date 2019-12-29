@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/git-sim/tc/app/domain/entity"
 	"github.com/git-sim/tc/app/usecase"
 )
 
@@ -20,7 +21,7 @@ func HandleMessage(mu usecase.MsgUsecase, u usecase.AccountUsecase) http.Handler
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		idstring := session.Values["id"].(string)
+		accIDString := session.Values["id"].(string)
 
 		switch r.Method {
 		case http.MethodPost:
@@ -33,33 +34,17 @@ func HandleMessage(mu usecase.MsgUsecase, u usecase.AccountUsecase) http.Handler
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-
-			ok, err := mu.IsValid(inmsg)
-			if ok && err == nil {
-				//Enq the message
-				outmsg, err := mu.EnqueueMsg(inmsg)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				err = json.NewEncoder(w).Encode(&outmsg)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				w.WriteHeader(http.StatusOK)
-			}
-
-		case http.MethodGet:
-			id, err := strconv.ParseUint(idstring, 10, 64)
+			//Enq the message
+			outmsgid, err := mu.EnqueueMsg(inmsg)
 			if err != nil {
-				errStr := fmt.Sprintf("Get message invalid message id %s, err %s",
-					idstring, err)
-				http.Error(w, errStr, http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			}
-			outmsg, err := mu.RetrieveMsg(usecase.MsgIDType(id))
+			// todo returning the ingested message in the response, could just
+			//    return the id and let the client come get it.
+			outmsg, err := mu.RetrieveMsg(outmsgid)
 			if err != nil {
-				http.Error(w, "message not found", http.StatusNotFound)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			err = json.NewEncoder(w).Encode(&outmsg)
@@ -67,11 +52,29 @@ func HandleMessage(mu usecase.MsgUsecase, u usecase.AccountUsecase) http.Handler
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusOK)
+
+		case http.MethodGet:
+			r.ParseForm()
+			msgIDString := r.FormValue("msgid")
+			id, err := strconv.ParseUint(msgIDString, entity.AccountIDStringBase, entity.AccountIDBits)
+			if err != nil {
+				errStr := fmt.Sprintf("Get message invalid acc id %s, message id %s, err %s",
+					accIDString, msgIDString, err)
+				http.Error(w, errStr, http.StatusBadRequest)
+			}
+			outmsg, err := mu.RetrieveMsg(usecase.MsgIDType(id))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			err = json.NewEncoder(w).Encode(&outmsg)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-
 	})
 }

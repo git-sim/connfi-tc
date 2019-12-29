@@ -46,7 +46,10 @@ func main() {
 	mux.Handle("/message", handlers.HandleMessage(msgUsecase, accUsecase))
 	//mux.Handle("/directory",  handlers.HandleDirectory(dirUsecase))
 
-	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != nil {
+	listenString := "0.0.0.0:8080"
+	fmt.Println("Listening at ", listenString)
+
+	if err := http.ListenAndServe(listenString, mux); err != nil {
 		log.Fatal("ListenAndServer:", err)
 	}
 }

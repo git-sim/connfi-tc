@@ -33,24 +33,25 @@ func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handl
 
 		acc, err := u.GetAccount(email)
 		if err != nil {
-			if err.Error() == usecase.ErrorNotFound.Error() {
+			es, ok := err.(*usecase.ErrStat)
+			if ok && es.Code == usecase.EsNotFound {
 				// Doesn't exist create new account
 				acc, err = u.RegisterAccount(email)
 				if err != nil {
-					http.Error(w, "Unable to register account", http.StatusInternalServerError)
-					fmt.Fprintf(w, "err: %s\n", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					fmt.Fprintf(w, "err: %s\n", err.Error())
 					return
 				}
 				//w.WriteHeader(http.StatusCreated) //the cookie is set iff StatusOk
 			} else {
 				http.Error(w, "Error while retrieving account", http.StatusInternalServerError)
-				fmt.Fprintf(w, "err: %s\n", err)
+				fmt.Fprintf(w, "err: %s\n", err.Error())
 				return
 			}
 		}
 		if acc != nil {
 
-			// Any real authenticaiton would potentially go here
+			// Any real authentication would potentially go here
 			session.Values["authenticated"] = true
 			session.Values["id"] = acc.ID
 			session.Save(r, w)

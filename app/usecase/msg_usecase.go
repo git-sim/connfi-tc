@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -20,11 +20,12 @@ type msgUsecase struct {
 var lastMsgID uint64
 var lastThreadID uint64
 
-func getNextMsgID() MsgIDType {
+// Returns a new unique id, the implementation is a detail
+func getNewMsgID() MsgIDType {
 	return MsgIDType(atomic.AddUint64(&lastMsgID, 1))
 }
 
-func getNextThreadID() ThreadIDType {
+func getNewThreadID() ThreadIDType {
 	return ThreadIDType(atomic.AddUint64(&lastThreadID, 1))
 }
 
@@ -46,15 +47,15 @@ func IsValidEmailStr(email string) bool {
 }
 
 type checkErr struct {
-	Err error
+	Err *ErrStat
 }
 
-func (ce *checkErr) Check(newErrStr string, assertFn func() bool) {
+func (ce *checkErr) Check(newErrCode int, newErrStr string, assertFn func() bool) {
 	if ce.Err != nil {
 		return
 	}
 	if assertFn() == false {
-		ce.Err = errors.New(newErrStr)
+		ce.Err = NewEs(newErrCode, newErrStr)
 	}
 	return
 }
@@ -63,13 +64,13 @@ func (ce *checkErr) Check(newErrStr string, assertFn func() bool) {
 func (u *msgUsecase) IsValid(msg *IngressMsg) (bool, error) {
 	// The follwing series of checks executed while err stays nil
 	ce := &checkErr{}
-	ce.Check("Invalid SenderEmail format",
+	ce.Check(EsArgInvalid, "SenderEmail format",
 		func() bool { return IsValidEmailStr(msg.SenderEmail) })
 
-	ce.Check("No Recipients",
+	ce.Check(EsArgInvalid, "No Recipients",
 		func() bool { return len(msg.Recipients) > 0 })
 
-	ce.Check("No Valid Recipient email formats",
+	ce.Check(EsArgInvalid, "No Valid Recipient email formats",
 		func() bool {
 			for _, rcp := range msg.Recipients {
 				if IsValidEmailStr(rcp) {
@@ -79,41 +80,54 @@ func (u *msgUsecase) IsValid(msg *IngressMsg) (bool, error) {
 			return false
 		})
 
-	ce.Check("Sender is not registered",
+	ce.Check(EsNotFound, "Sender is not registered",
 		func() bool {
 			return u.service.AlreadyExists(msg.SenderEmail)
 		})
 
-	var ok = (ce.Err == nil)
-	return ok, ce.Err
+	if ce.Err != nil {
+		return false, ce.Err
+	}
+	return true, nil
 }
 
 // EnqueueMsg adds the message to the system for scheduling/delivery
-func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (*EgressMsg, error) {
+func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
+	// Sanity check
 	if ok, err := u.IsValid(msg); !ok {
-		return nil, err
+		return 0, err
 	}
 
+	// Prepare the message struct adding meta data as needed
+	//
 	newmsg := entity.Msg{M: entity.MsgBase(*msg)}
 
 	//Validate or Assign ThreadId
 	if msg.ParentMid == 0 {
-		newmsg.Tid = entity.ThreadIDType(getNextThreadID())
+		newmsg.Tid = entity.ThreadIDType(getNewThreadID())
 	} else {
 		//todo find the parent message, and assign it's thread id
 
 	}
-	//Validate ParentMsgId
-	//
+	//Validate ParentMsgId //todo thread handling
 	//Fill in SenderID
-	//Assign new MsgId
-	newmsg.Mid = entity.MsgIDType(getNextMsgID())
-	//Add to message store
-	err := u.dbMsg.Create(repo.GenericKeyT(newmsg.Mid), newmsg)
-	if err != nil {
-
+	if senderID, err := u.service.GetIDFromEmail(msg.SenderEmail); err == nil {
+		newmsg.SenderID = senderID
+	} else {
+		// error the sender issue with sender id
+		return 0, NewEs(EsNotFound, "Sender Account ID")
 	}
 
+	// Assign new MsgId and Store the Message
+	//
+	newid := getNewMsgID()
+	newmsg.Mid = entity.MsgIDType(newid)
+	if err := u.dbMsg.Create(repo.GenericKeyT(newmsg.Mid), newmsg); err != nil {
+		return 0, err
+	}
+
+	// Handle the scheduling and dispatch if needed
+	//
 	//Check if Scheduled for future delivery
 	//if so add to sender's Scheduled folder and Add timer
 	if msg.ScheduledAt.After(time.Now().Add(time.Second * 10)) {
@@ -124,12 +138,23 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (*EgressMsg, error) {
 		// todo dispatch
 	}
 
-	//Check if all Recipients existed, if not add to PendingMsgs with the missing recips
+	// Check if all Recipients existed, if not add to PendingMsgs with the missing recips
 	//
-	return nil, nil
+	return newid, nil
 }
 
-// RetrieveMsg gets the specified message
+// RetrieveMsg gets the specified message from the message store
 func (u *msgUsecase) RetrieveMsg(mid MsgIDType) (*EgressMsg, error) {
-	return nil, nil
+	val, err := u.dbMsg.Retrieve(repo.GenericKeyT(mid))
+	if err != nil {
+		return nil, NewEs(EsNotFound,
+			fmt.Sprintf("Message with id %d", mid))
+	}
+	valAsEnt, ok := val.(entity.Msg) //Type assert first
+	if !ok {
+		return nil, NewEs(EsArgConvFail, "Repository to entity.Msg")
+	}
+
+	emsg := EgressMsg(valAsEnt) //convert to outgoing type
+	return &emsg, nil
 }

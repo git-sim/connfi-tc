@@ -1,17 +1,11 @@
 package usecase
 
-import (
-	"errors"
-)
-
-// ErrorNotFound did not find account with the given email or ID
-var ErrorNotFound = errors.New("Item not found")
-
 // AccountUsecase interface for account management
 type AccountUsecase interface {
 	GetAccountList() ([]*Account, error)
 	GetAccount(email string) (*Account, error)
 	RegisterAccount(email string) (*Account, error)
+	UpdateNameAccount(email string, firstname *string, lastname *string) error
 	DeleteAccount(email string) error
 
 	GetSession() SessionUsecase

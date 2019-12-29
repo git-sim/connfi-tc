@@ -1,13 +1,13 @@
 package ram
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 	"sync"
 
 	"github.com/git-sim/tc/app/domain/entity"
+	"github.com/git-sim/tc/app/usecase"
 )
 
 // Data type for Account in Ram, provides dependency inversion (isolation from) entity.Account
@@ -41,7 +41,7 @@ func NewAccountRepo() *accountRepo {
 
 func (r *accountRepo) Create(a *entity.Account) error {
 	if a == nil {
-		return fmt.Errorf("Invalid *entity.Account")
+		return usecase.NewEs(usecase.EsArgInvalid, "*entity.Account")
 	}
 
 	r.mtx.Lock()
@@ -58,7 +58,7 @@ func (r *accountRepo) Create(a *entity.Account) error {
 
 func (r *accountRepo) Update(a *entity.Account) error {
 	if a == nil {
-		return fmt.Errorf("Invalid *entity.Account")
+		return usecase.NewEs(usecase.EsArgInvalid, "*entity.Account")
 	}
 
 	r.mtx.Lock()
@@ -73,13 +73,13 @@ func (r *accountRepo) Update(a *entity.Account) error {
 		}
 		return nil
 	} else {
-		return fmt.Errorf("Update error: entity.Account doesn't exist")
+		return usecase.NewEs(usecase.EsNotFound, "entity.Account")
 	}
 }
 
 func (r *accountRepo) Delete(a *entity.Account) error {
 	if a == nil {
-		return fmt.Errorf("Invalid entity.Account")
+		return usecase.NewEs(usecase.EsArgInvalid, "*entity.Account")
 	}
 
 	r.mtx.Lock()
@@ -87,8 +87,6 @@ func (r *accountRepo) Delete(a *entity.Account) error {
 	delete(r.accounts, a.GetID())
 	return nil
 }
-
-var errEmailNotFound = errors.New("email not found")
 
 func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
 	r.mtx.Lock()
@@ -100,13 +98,15 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
 			return ret, nil
 		}
 	}
-	return nil, errEmailNotFound
+	return nil, usecase.NewEs(usecase.EsNotFound, "Email")
+
 }
 
 func (r *accountRepo) RetrieveByID(id string) (*entity.Account, error) {
-	id64, err := fromStrToId(id)
+	id64, err := fromStrToID(id)
 	if err != nil {
-		return nil, err
+		return nil, usecase.NewEs(usecase.EsArgConvFail,
+			fmt.Sprintf("account id64 <- %s", id))
 	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -153,17 +153,16 @@ func (r *accountRepo) RetrieveAll() ([]*entity.Account, error) {
 	return accounts, nil
 }
 
-// Helpers for conversions
+// GetIDString Helpers for conversions
 func GetIDString(id entity.AccountIDType) string {
-	return strconv.FormatUint(uint64(id), 16)
+	return strconv.FormatUint(uint64(id), entity.AccountIDStringBase)
 }
 
-var errBadId = errors.New("bad ID string, must by uint64 encoded in hex")
-
-func fromStrToId(s string) (entity.AccountIDType, error) {
-	n, err := strconv.ParseUint(s, 16, 64)
+func fromStrToID(s string) (entity.AccountIDType, error) {
+	n, err := strconv.ParseUint(s, entity.AccountIDStringBase, entity.AccountIDBits)
 	if err != nil {
-		return 0, errBadId
+		return 0, usecase.NewEs(usecase.EsArgInvalid,
+			fmt.Sprintf("bad ID string %s, must be uint64 encoded in hex", s))
 	}
 	return entity.AccountIDType(n), nil
 }

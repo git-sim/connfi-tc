@@ -4,6 +4,18 @@ import (
 	"github.com/git-sim/tc/app/domain/entity"
 )
 
+// MsgUsecase ifc
+type MsgUsecase interface {
+	// Checks whether the msg is valid before Enqueuing
+	IsValid(msg *IngressMsg) (bool, error)
+
+	// Enqueues the message into the system. On success (newMsgid,nil) on fail (0,err)
+	EnqueueMsg(msg *IngressMsg) (MsgIDType, error)
+
+	//Get a message from the msg store
+	RetrieveMsg(mid MsgIDType) (*EgressMsg, error)
+}
+
 // MsgIDType layer of indirection to allow future extension
 type MsgIDType entity.MsgIDType
 
@@ -15,18 +27,6 @@ type IngressMsg entity.MsgBase
 
 // EgressMsg the type of messages going out of the layer (has user generated metadata attached)
 type EgressMsg entity.Msg
-
-// MsgUsecase ifc
-type MsgUsecase interface {
-	// Checks whether the msg is valid before Enqueuing
-	IsValid(msg *IngressMsg) (bool, error)
-
-	// Enqueues the message into the system
-	EnqueueMsg(msg *IngressMsg) (*EgressMsg, error)
-
-	//For testing only should disallow an unqualified msg read in a real system, should be user based
-	RetrieveMsg(mid MsgIDType) (*EgressMsg, error)
-}
 
 //NOTE MsgUsecase exposies the entity.Msg types at the usecase boundary.
 //  It's not against Clean architecture since, the dependency is still inward, but
