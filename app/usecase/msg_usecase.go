@@ -133,12 +133,28 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 	//Check if Scheduled for future delivery
 	//if so add to sender's Scheduled folder and Add timer
 	if msg.ScheduledAt.After(time.Now().Add(time.Second * 10)) {
-		//todo
+		//Put the message in the scheduled folder, notify a timer
+		pMsgEntry := entity.NewMsgEntry(newmsg)
+		err := u.folUsecase.AddToFolder(EnumScheduled, newmsg.SenderID, *pMsgEntry)
+		if err != nil {
+			return newid, NewEs(EsInternalError,
+				fmt.Sprintf("Couldn't add to scheduled folder sender %d, %s",
+					newmsg.SenderID, err.Error()))
+		}
+
 	} else {
 		//else assign SentAt and Dispatch the message to recipients
 		newmsg.SentAt = time.Now()
-		// todo dispatch
+		// todo dispatch move to its own function in the entity layer
+
+		// Add to Sent folder
 		pMsgEntry := entity.NewMsgEntry(newmsg)
+		err := u.folUsecase.AddToFolder(EnumSent, newmsg.SenderID, *pMsgEntry)
+		if err != nil {
+			return newid, NewEs(EsInternalError,
+				fmt.Sprintf("%s", err.Error()))
+		}
+		// Dispatch to recipients
 		for _, recip := range newmsg.M.Recipients {
 			recipID, err := u.service.GetIDFromEmail(recip)
 			if err == nil {
@@ -149,7 +165,9 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 						fmt.Sprintf("%s", err.Error()))
 				}
 			} else {
-				err = u.dbPending.Create(repo.GenericKeyT(newmsg.Mid), &newmsg)
+				// Recipient isn't in the system, add the message to the pending queue
+				pNewPendMsg := entity.NewPendingMsgEntry(*pMsgEntry, recip)
+				err = u.dbPending.Create(repo.GenericKeyT(pNewPendMsg.E.Mid), *pNewPendMsg)
 				if err != nil {
 					return newid, NewEs(EsInternalError,
 						fmt.Sprintf("%s", err.Error()))
@@ -157,9 +175,6 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 			}
 		}
 	}
-
-	// Check if all Recipients existed, if not add to PendingMsgs with the missing recips
-	//
 	return newid, nil
 }
 

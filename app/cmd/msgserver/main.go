@@ -6,7 +6,6 @@ import (
 	"net/http"
 	_ "sync"
 
-	"github.com/git-sim/tc/app/domain/entity"
 	"github.com/git-sim/tc/app/domain/repo"
 	"github.com/git-sim/tc/app/domain/service"
 	"github.com/git-sim/tc/app/io/rest/handlers"
@@ -44,11 +43,8 @@ func main() {
 	profUcs.ImageUsecases[handlers.EnumAvatarImageUsecase] = usecase.NewProfileImageUsecase(dbAviImgs)
 	profUcs.ImageUsecases[handlers.EnumBgImageUsecase] = usecase.NewProfileImageUsecase(dbBgImgs)
 
-	//Initialize internal notifications Move this to a registery file
-	accServ.SubscribeRegisterAccount(
-		func(acc entity.Account) {
-			folUsecase.CreateNewFolders(acc)
-		})
+	//Initialize internal notifications
+	usecase.InitSubscribers(accServ, folUsecase, accUsecase, dbPendingMsgs)
 
 	mux := http.NewServeMux()
 	mux.Handle("/login", handlers.HandleLogin(sessionUsecase, accUsecase))

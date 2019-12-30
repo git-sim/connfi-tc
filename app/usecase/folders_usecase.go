@@ -16,6 +16,7 @@ type foldersUsecase struct {
 }
 
 // Define what folders the user starts with
+
 // InboxFolderType def
 type InboxFolderType map[entity.MsgIDType]entity.MsgEntry
 type ArchiveFolderType map[entity.MsgIDType]entity.MsgEntry
@@ -91,31 +92,6 @@ func (f *foldersUsecase) AddToFolder(folderEnum int, id entity.AccountIDType, ms
 	//
 	return err
 }
-
-// Original that was working
-// // Add a message to a user's folder
-// func (f *foldersUsecase) AddToFolder(folderEnum int, id entity.AccountIDType, msg entity.MsgEntry) error {
-// 	// should be an assert
-// 	if folderEnum < 0 || EnumNumFolders <= folderEnum {
-// 		return NewEs(EsArgInvalid,
-// 			fmt.Sprintf("folderEnum %d", folderEnum))
-// 	}
-
-// 	// todo fix this. It is a hack because I haven't looked up the
-// 	// best way to do a collection of a collection, preserving the interface.
-// 	// Right now I get the whole folder, update it and put it back. This is
-// 	// a glaring concurrency problem.  Come back to this after the frontend ifc if worked out
-// 	dbkey := repo.GenericKeyT(id)
-// 	val, err := f.dbFolders.Retrieve(dbkey)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	inbox := val.(InboxFolderType)
-// 	inbox[msg.Mid] = msg
-// 	f.dbFolders.Update(dbkey, inbox)
-// 	//
-// 	return nil
-// }
 
 func (f *foldersUsecase) ArchiveMsg(id entity.AccountIDType, mid entity.MsgIDType) error {
 	return f.moveBetweenFolders(EnumInbox, EnumArchive, id, mid)

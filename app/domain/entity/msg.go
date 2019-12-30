@@ -48,6 +48,14 @@ func NewMsgEntry(msg Msg) *MsgEntry {
 
 // PendingMsgEntry for queued messages waiting for recipients. Early Optimization? could just scan the messages when a new user is added
 type PendingMsgEntry struct {
-	E              MsgEntry
-	RecipientsLeft []string
+	E             MsgEntry
+	RecipientLeft string
+}
+
+// NewPendingMsgEntry Creates a new PendingMsgEntry from a MsgEntry
+func NewPendingMsgEntry(me MsgEntry, remail string) *PendingMsgEntry {
+	return &PendingMsgEntry{
+		E:             me,
+		RecipientLeft: remail,
+	}
 }
