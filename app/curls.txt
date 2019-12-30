@@ -20,6 +20,7 @@ curl -v -b testcookiefile.txt -c testcookiefile.txt -XDELETE localhost:8080/acco
 ====
 Login
 curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/login?email=alice.smith@mail.com
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/login?email=bob.smith@mail.com
 
 ==== 
 Message

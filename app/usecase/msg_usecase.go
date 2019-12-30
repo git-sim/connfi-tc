@@ -11,9 +11,10 @@ import (
 )
 
 type msgUsecase struct {
-	dbMsg     repo.Generic
-	dbPending repo.Generic
-	service   *service.AccountService
+	dbMsg      repo.Generic
+	dbPending  repo.Generic
+	folUsecase FoldersUsecase
+	service    *service.AccountService
 }
 
 // Msg and Thread Id helpers
@@ -30,11 +31,12 @@ func getNewThreadID() ThreadIDType {
 }
 
 // NewMsgUsecase news usecase
-func NewMsgUsecase(dbMsg repo.Generic, dbPending repo.Generic, service *service.AccountService) MsgUsecase {
+func NewMsgUsecase(dbMsg repo.Generic, dbPending repo.Generic, folUsecase FoldersUsecase, service *service.AccountService) MsgUsecase {
 	return &msgUsecase{
-		dbMsg:     dbMsg,
-		dbPending: dbPending,
-		service:   service,
+		dbMsg:      dbMsg,
+		dbPending:  dbPending,
+		folUsecase: folUsecase,
+		service:    service,
 	}
 }
 
@@ -136,6 +138,24 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 		//else assign SentAt and Dispatch the message to recipients
 		newmsg.SentAt = time.Now()
 		// todo dispatch
+		pMsgEntry := entity.NewMsgEntry(newmsg)
+		for _, recip := range newmsg.M.Recipients {
+			recipID, err := u.service.GetIDFromEmail(recip)
+			if err == nil {
+				// Recipient is in the system send message
+				err = u.folUsecase.AddToFolder(EnumInbox, recipID, *pMsgEntry)
+				if err != nil {
+					return newid, NewEs(EsInternalError,
+						fmt.Sprintf("%s", err.Error()))
+				}
+			} else {
+				err = u.dbPending.Create(repo.GenericKeyT(newmsg.Mid), &newmsg)
+				if err != nil {
+					return newid, NewEs(EsInternalError,
+						fmt.Sprintf("%s", err.Error()))
+				}
+			}
+		}
 	}
 
 	// Check if all Recipients existed, if not add to PendingMsgs with the missing recips

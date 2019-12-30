@@ -26,6 +26,25 @@ func NewAccountUsecase(repo repo.AccountRepo, session SessionUsecase, service *s
 	}
 }
 
+// RegisterAccount this is one of the major events in the system creating the structures needed for the account.
+func (u *accountUsecase) RegisterAccount(email string) (*Account, error) {
+	if u.service.AlreadyExists(email) {
+		return nil, NewEs(EsAlreadyExists, "User Account")
+	}
+
+	// Create the account and associated structures in the system
+	//   A Delete account should undo the below in reverse order to make sure
+	//   we have a good cleanup
+	uid := GetUID(email)
+	acc := entity.NewAccount(entity.AccountIDType(uid), email)
+	if err := u.repo.Create(acc); err != nil {
+		return nil, err
+	}
+	u.service.NotifyRegisterAccount(*acc)
+	out := toAccount([]*entity.Account{acc})
+	return out[0], nil
+}
+
 func (u *accountUsecase) GetSession() SessionUsecase {
 	return u.session
 }
@@ -51,21 +70,6 @@ func (u *accountUsecase) GetAccountList() ([]*Account, error) {
 		return toAccount(Accounts), nil
 	}
 	return []*Account{}, NewEs(EsEmpty, "Accounts")
-}
-
-func (u *accountUsecase) RegisterAccount(email string) (*Account, error) {
-	h := fnv.New64a()
-	h.Write([]byte(email))
-	uid := h.Sum64()
-	if u.service.AlreadyExists(email) {
-		return nil, NewEs(EsAlreadyExists, "User Account")
-	}
-	acc := entity.NewAccount(entity.AccountIDType(uid), email)
-	if err := u.repo.Create(acc); err != nil {
-		return nil, err
-	}
-	out := toAccount([]*entity.Account{acc})
-	return out[0], nil
 }
 
 func (u *accountUsecase) UpdateNameAccount(email string, firstname *string, lastname *string) error {
@@ -112,4 +116,12 @@ func toAccount(Accounts []*entity.Account) []*Account {
 		}
 	}
 	return res
+}
+
+// details of getting a unique id for the account
+func GetUID(in string) uint64 {
+	h := fnv.New64a()
+	h.Write([]byte(in))
+	uid := h.Sum64()
+	return uid
 }

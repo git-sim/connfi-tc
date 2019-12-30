@@ -35,6 +35,15 @@ type MsgEntry struct {
 	ViewedAt  time.Time
 	IsRead    bool
 	IsStarred bool
+	M         Msg
+}
+
+// NewMsgEntry Creates a new MsgEntry from a Msg
+func NewMsgEntry(msg Msg) *MsgEntry {
+	return &MsgEntry{
+		Mid: msg.Mid,
+		M:   msg,
+	}
 }
 
 // PendingMsgEntry for queued messages waiting for recipients. Early Optimization? could just scan the messages when a new user is added
