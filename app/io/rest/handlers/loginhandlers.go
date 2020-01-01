@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -22,48 +23,57 @@ func exampleSessionID(us usecase.SessionUsecase, r *http.Request, w http.Respons
 // HandleLogin - handles logging in or registering a new account
 func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		email := r.FormValue("email")
-		if email == "" {
-			http.Error(w, "missing email in request", http.StatusBadRequest)
-			return
-		}
+		SetupCORS(w)
+		switch r.Method {
+		case http.MethodPost:
+			r.ParseForm()
+			email := r.FormValue("email")
+			if email == "" {
+				http.Error(w, "missing email in request", http.StatusBadRequest)
+				return
+			}
 
-		session, _ := us.FromReq(r)
+			session, _ := us.FromReq(r)
 
-		acc, err := u.GetAccount(email)
-		if err != nil {
-			es, ok := err.(*usecase.ErrStat)
-			if ok && es.Code == usecase.EsNotFound {
-				// Doesn't exist create new account
-				acc, err = u.RegisterAccount(email)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+			acc, err := u.GetAccount(email)
+			if err != nil {
+				es, ok := err.(*usecase.ErrStat)
+				if ok && es.Code == usecase.EsNotFound {
+					// Doesn't exist create new account
+					acc, err = u.RegisterAccount(email)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						fmt.Fprintf(w, "err: %s\n", err.Error())
+						return
+					}
+					//w.WriteHeader(http.StatusCreated) //the cookie is set iff StatusOk
+				} else {
+					http.Error(w, "Error while retrieving account", http.StatusInternalServerError)
 					fmt.Fprintf(w, "err: %s\n", err.Error())
 					return
 				}
-				//w.WriteHeader(http.StatusCreated) //the cookie is set iff StatusOk
-			} else {
-				http.Error(w, "Error while retrieving account", http.StatusInternalServerError)
-				fmt.Fprintf(w, "err: %s\n", err.Error())
-				return
 			}
-		}
-		if acc != nil {
+			if acc != nil {
 
-			// Any real authentication would potentially go here
-			session.Values["authenticated"] = true
-			session.Values["id"] = acc.ID
-			session.Save(r, w)
+				// Any real authentication would potentially go here
+				session.Values["authenticated"] = true
+				session.Values["id"] = acc.ID
+				session.Save(r, w)
 
-			fmt.Fprintf(w, "id: %s\n", acc.ID)
+				err = json.NewEncoder(w).Encode(acc)
+			}
+
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
+
 	})
 }
 
 // HandleLogout clears out the session id
 func HandleLogout(us usecase.SessionUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		SetupCORS(w)
 		r.ParseForm()
 		session, _ := us.FromReq(r)
 

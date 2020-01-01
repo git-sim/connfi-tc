@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"github.com/git-sim/tc/app/usecase"
@@ -9,6 +9,7 @@ import (
 
 func HandleAccount(u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		SetupCORS(w)
 		//Always returns a session
 		session, _ := u.GetSession().FromReq(r)
 		// Could do auth here, we're interested in getting the AccountId of the user
@@ -28,11 +29,19 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 		case http.MethodPost:
 			acc, err := u.RegisterAccount(email)
 			if err != nil {
-				http.Error(w, "email already in use", http.StatusBadRequest)
+				if usecase.CheckEs(err, usecase.EsAlreadyExists) {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				} else {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+			}
+			err = json.NewEncoder(w).Encode(acc)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusCreated)
-			_, _ = fmt.Fprintf(w, "id: %s\n", acc.ID)
 		case http.MethodDelete:
 			err := u.DeleteAccount(email)
 			if err != nil {
@@ -47,10 +56,11 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 				http.Error(w, "email not found", http.StatusNotFound)
 				return
 			}
-			w.WriteHeader(http.StatusOK)
-			_, _ = fmt.Fprintf(w, "id: %s, email: %s, FirstName: %s, LastName: %s\n",
-				acc.ID, acc.Email, acc.FirstName, acc.LastName)
-			//w.Write(acc)
+			err = json.NewEncoder(w).Encode(acc)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
 		case http.MethodPut:
 			acc, err := u.GetAccount(email)
@@ -92,6 +102,7 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 
 func HandleAccountList(u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		SetupCORS(w)
 		switch r.Method {
 		case http.MethodGet:
 			accs, err := u.GetAccountList()
@@ -100,11 +111,12 @@ func HandleAccountList(u usecase.AccountUsecase) http.Handler {
 				return
 			}
 			w.WriteHeader(http.StatusOK)
-			_, _ = fmt.Fprintf(w, "count: %d\n", len(accs))
-			for _, acc := range accs {
-				_, _ = fmt.Fprintf(w, "id: %s, email: %s\n", acc.ID, acc.Email)
+
+			err = json.NewEncoder(w).Encode(accs)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
-			//w.Write(acc)
 
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

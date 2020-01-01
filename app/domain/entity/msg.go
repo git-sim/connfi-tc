@@ -19,6 +19,7 @@ const ThreadIDStringBase = 16
 // MsgBase basic type coming into the system
 type MsgBase struct {
 	ParentMid   MsgIDType
+	CreatedAt   time.Time
 	ScheduledAt time.Time
 	SenderEmail string
 	Recipients  []string

@@ -124,9 +124,7 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 	//
 	newid := getNewMsgID()
 	newmsg.Mid = entity.MsgIDType(newid)
-	if err := u.dbMsg.Create(repo.GenericKeyT(newmsg.Mid), newmsg); err != nil {
-		return 0, err
-	}
+	newmsg.M.CreatedAt = time.Now()
 
 	// Handle the scheduling and dispatch if needed
 	//
@@ -142,12 +140,18 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 				fmt.Sprintf("Couldn't add to scheduled folder sender %d, %s",
 					newmsg.SenderID, err.Error()))
 		}
+		if err := u.dbMsg.Create(repo.GenericKeyT(newmsg.Mid), newmsg); err != nil {
+			return 0, err
+		}
 
 	} else {
 		//else assign SentAt and Dispatch the message to recipients
 		newmsg.SentAt = time.Now()
-		// todo dispatch move to its own function in the entity layer
+		if err := u.dbMsg.Create(repo.GenericKeyT(newmsg.Mid), newmsg); err != nil {
+			return 0, err
+		}
 
+		// Todo move the dispatch to it's own folder
 		// Add to Sent folder
 		pMsgEntry := entity.NewMsgEntry(newmsg)
 		err := u.folUsecase.AddToFolder(EnumSent, AccountIDType(newmsg.SenderID), MsgEntry(*pMsgEntry))

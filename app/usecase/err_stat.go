@@ -75,3 +75,12 @@ func NewEs(code int, msg string) *ErrStat {
 	// could enable logging here for debug
 	return &ErrStat{code, msg}
 }
+
+// CheckEs helper to see if an error is an ErrStat with a particular code
+func CheckEs(e error, inCode int) bool {
+	errstat, ok := e.(*ErrStat)
+	if ok {
+		return errstat.Code == inCode
+	}
+	return false
+}

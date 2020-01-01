@@ -45,6 +45,7 @@ func main() {
 
 	//Initialize internal notifications
 	usecase.InitSubscribers(accServ, folUsecase, accUsecase, dbPendingMsgs)
+	usecase.InitAccounts(accUsecase)
 
 	mux := http.NewServeMux()
 	mux.Handle("/login", handlers.HandleLogin(sessionUsecase, accUsecase))

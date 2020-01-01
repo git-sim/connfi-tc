@@ -11,7 +11,7 @@ import (
 // HandleMessage handler - Allows POSTing messages to the system, and reading a message given an id
 func HandleMessage(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		SetupCORS(w)
 		//Always returns a session
 		session, _ := u.GetSession().FromReq(r)
 		// Could do auth here, we're interested in getting the AccountId of the user

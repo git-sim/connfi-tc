@@ -8,6 +8,12 @@ import (
 
 // Register, connect up subscribers for the events in the system
 
+// InitAccounts ...
+func InitAccounts(accUsecase AccountUsecase) error {
+	_, err := accUsecase.RegisterAccount("admin@localhost")
+	return err
+}
+
 // InitSubscribers called at bootup
 func InitSubscribers(accServ *service.AccountService, folUsecase FoldersUsecase,
 	accUsecase AccountUsecase, dbPendingMsgs repo.Generic) error {
