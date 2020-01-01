@@ -58,7 +58,7 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 				http.Error(w, "email not found", http.StatusNotFound)
 				return
 			}
-			// Verify that Check that the logged in account is the one that's making the change
+			// Check that the logged in account is the one that's making the change
 			if accIDString == acc.ID {
 				// Have to distinguish between an empty name and a non-specified name
 				// Don't change the name if it was nil

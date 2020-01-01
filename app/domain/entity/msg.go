@@ -7,8 +7,14 @@ import (
 // MsgIDType set the id type
 type MsgIDType uint64
 
+const MsgIDBits = 64
+const MsgIDStringBase = 16
+
 // ThreadIDType set the thread id type
 type ThreadIDType uint64
+
+const ThreadIDBits = 64
+const ThreadIDStringBase = 16
 
 // MsgBase basic type coming into the system
 type MsgBase struct {
@@ -33,9 +39,16 @@ type Msg struct {
 type MsgEntry struct {
 	Mid       MsgIDType
 	ViewedAt  time.Time
-	IsRead    bool
+	IsViewed  bool
 	IsStarred bool
+	Folder    string
 	M         Msg
+}
+
+func NewMsg(msgbase MsgBase) *Msg {
+	return &Msg{
+		M: msgbase,
+	}
 }
 
 // NewMsgEntry Creates a new MsgEntry from a Msg

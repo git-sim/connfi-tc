@@ -47,7 +47,8 @@ func initRegisterAccountSubsribers(accServ *service.AccountService, folUsecase F
 					if pendmsg, ok := val.(entity.PendingMsgEntry); ok {
 						if pendmsg.RecipientLeft == acc.GetEmail() {
 							folUsecase.AddToFolder(EnumInbox,
-								acc.GetID(), pendmsg.E)
+								AccountIDType(acc.GetID()),
+								MsgEntry(pendmsg.E))
 
 							// Update/Delete the pending msg
 							msgkey := repo.GenericKeyT(pendmsg.E.Mid)

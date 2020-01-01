@@ -52,7 +52,8 @@ func main() {
 	mux.Handle("/account", handlers.HandleAccount(accUsecase))
 	mux.Handle("/accountList", handlers.HandleAccountList(accUsecase))
 	mux.Handle("/profile", handlers.HandleProfile(accUsecase, profUcs))
-	mux.Handle("/message", handlers.HandleMessage(msgUsecase, accUsecase))
+	mux.Handle("/message", handlers.HandleMessage(msgUsecase, folUsecase, accUsecase))
+	mux.Handle("/folder", handlers.HandleFolder(folUsecase, msgUsecase, accUsecase))
 	//mux.Handle("/directory",  handlers.HandleDirectory(dirUsecase))
 
 	listenString := "0.0.0.0:8080"

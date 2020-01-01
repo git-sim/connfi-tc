@@ -135,7 +135,8 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 	if msg.ScheduledAt.After(time.Now().Add(time.Second * 10)) {
 		//Put the message in the scheduled folder, notify a timer
 		pMsgEntry := entity.NewMsgEntry(newmsg)
-		err := u.folUsecase.AddToFolder(EnumScheduled, newmsg.SenderID, *pMsgEntry)
+		err := u.folUsecase.AddToFolder(EnumScheduled,
+			AccountIDType(newmsg.SenderID), MsgEntry(*pMsgEntry))
 		if err != nil {
 			return newid, NewEs(EsInternalError,
 				fmt.Sprintf("Couldn't add to scheduled folder sender %d, %s",
@@ -149,7 +150,7 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 
 		// Add to Sent folder
 		pMsgEntry := entity.NewMsgEntry(newmsg)
-		err := u.folUsecase.AddToFolder(EnumSent, newmsg.SenderID, *pMsgEntry)
+		err := u.folUsecase.AddToFolder(EnumSent, AccountIDType(newmsg.SenderID), MsgEntry(*pMsgEntry))
 		if err != nil {
 			return newid, NewEs(EsInternalError,
 				fmt.Sprintf("%s", err.Error()))
@@ -159,7 +160,7 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 			recipID, err := u.service.GetIDFromEmail(recip)
 			if err == nil {
 				// Recipient is in the system send message
-				err = u.folUsecase.AddToFolder(EnumInbox, recipID, *pMsgEntry)
+				err = u.folUsecase.AddToFolder(EnumInbox, AccountIDType(recipID), MsgEntry(*pMsgEntry))
 				if err != nil {
 					return newid, NewEs(EsInternalError,
 						fmt.Sprintf("%s", err.Error()))
