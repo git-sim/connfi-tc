@@ -9,7 +9,7 @@ import (
 
 func HandleAccount(u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(w)
+		SetupCORS(r, w)
 		//Always returns a session
 		session, _ := u.GetSession().FromReq(r)
 		// Could do auth here, we're interested in getting the AccountId of the user
@@ -102,7 +102,7 @@ func HandleAccount(u usecase.AccountUsecase) http.Handler {
 
 func HandleAccountList(u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(w)
+		SetupCORS(r, w)
 		switch r.Method {
 		case http.MethodGet:
 			accs, err := u.GetAccountList()

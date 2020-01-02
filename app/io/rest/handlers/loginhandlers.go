@@ -23,7 +23,7 @@ func exampleSessionID(us usecase.SessionUsecase, r *http.Request, w http.Respons
 // HandleLogin - handles logging in or registering a new account
 func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(w)
+		SetupCORS(r,w)
 		switch r.Method {
 		case http.MethodPost:
 			r.ParseForm()
@@ -73,7 +73,7 @@ func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handl
 // HandleLogout clears out the session id
 func HandleLogout(us usecase.SessionUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(w)
+		SetupCORS(r,w)
 		r.ParseForm()
 		session, _ := us.FromReq(r)
 

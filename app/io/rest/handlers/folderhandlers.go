@@ -18,7 +18,7 @@ import (
 // HandleFolder handler
 func HandleFolder(ufo usecase.FoldersUsecase, mu usecase.MsgUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(w)
+		SetupCORS(r, w)
 		//Always returns a session
 		session, _ := u.GetSession().FromReq(r)
 		// Could do auth here, we're interested in getting the AccountId of the user
