@@ -8,5 +8,6 @@ import (
 
 // SessionUsecase Interface -
 type SessionUsecase interface {
+	
 	FromReq(r *http.Request) (*sessions.Session, error)
 }

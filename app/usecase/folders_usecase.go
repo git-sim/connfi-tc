@@ -275,7 +275,12 @@ func (f *foldersUsecase) QueryMsgs(id AccountIDType, qp QueryParams) (*MsgQueryO
 	}
 
 	pOut.NumElems = nToSend
-	pOut.Elems = elems[startIdx : startIdx+nToSend] //[a:a] is 0 len slice in go which works here
+	if nToSend > 0 {
+		pOut.Elems = elems[startIdx : startIdx+nToSend] //[a:a] is 0 len slice in go which works here
+	} else {
+		// bad etiquette to send null, send empty list instead
+		pOut.Elems = []MsgEntry{}
+	}
 
 	return pOut, nil
 }

@@ -104,6 +104,14 @@ func (u *accountUsecase) DeleteAccount(email string) error {
 	return nil
 }
 
+func (u *accountUsecase) IsRegisteredID(id string) bool {
+	accID, err := ToAccountID(id)
+	if err != nil {
+		return false
+	}
+	return u.service.AlreadyExistsByID(entity.AccountIDType(accID))
+}
+
 // Conversion function from entity.Account to usecase.Account
 func toAccount(Accounts []*entity.Account) []*Account {
 	res := make([]*Account, len(Accounts))

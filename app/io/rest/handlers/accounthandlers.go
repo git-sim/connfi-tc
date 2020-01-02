@@ -10,14 +10,11 @@ import (
 func HandleAccount(u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		SetupCORS(r, w)
-		//Always returns a session
-		session, _ := u.GetSession().FromReq(r)
-		// Could do auth here, we're interested in getting the AccountId of the user
-		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+		accIDString, ok, auth := GetAccIDFromSession(u, r)
+		if !auth || !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		accIDString := session.Values["id"].(string)
 
 		r.ParseForm()
 		email := r.FormValue("email")
@@ -107,7 +104,7 @@ func HandleAccountList(u usecase.AccountUsecase) http.Handler {
 		case http.MethodGet:
 			accs, err := u.GetAccountList()
 			if err != nil {
-				http.Error(w, "email not found", http.StatusNotFound)
+				http.Error(w, "account list not found", http.StatusInternalServerError)
 				return
 			}
 			w.WriteHeader(http.StatusOK)

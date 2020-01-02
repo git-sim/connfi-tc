@@ -30,6 +30,15 @@ func (s *AccountService) AlreadyExists(email string) bool {
 	return false
 }
 
+// AlreadyExistsByID ...
+func (s *AccountService) AlreadyExistsByID(id entity.AccountIDType) bool {
+	_, err := s.repo.RetrieveByID(id)
+	if err == nil {
+		return true
+	}
+	return false
+}
+
 // GetIDFromEmail utility reverse lookup
 func (s *AccountService) GetIDFromEmail(email string) (entity.AccountIDType, error) {
 	val, err := s.repo.Retrieve(email) //todo replace with the promised quick mapping

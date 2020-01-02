@@ -16,6 +16,7 @@ type AccountUsecase interface {
 	DeleteAccount(email string) error
 
 	GetSession() SessionUsecase
+	IsRegisteredID(id string) bool
 }
 
 // An Account type for tranferring across the Usecase boundary

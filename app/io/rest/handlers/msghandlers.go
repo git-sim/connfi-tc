@@ -11,15 +11,12 @@ import (
 // HandleMessage handler - Allows POSTing messages to the system, and reading a message given an id
 func HandleMessage(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r,w)
-		//Always returns a session
-		session, _ := u.GetSession().FromReq(r)
-		// Could do auth here, we're interested in getting the AccountId of the user
-		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+		SetupCORS(r, w)
+		accIDString, ok, auth := GetAccIDFromSession(u, r)
+		if !auth || !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		accIDString := session.Values["id"].(string)
 
 		switch r.Method {
 		case http.MethodPost:

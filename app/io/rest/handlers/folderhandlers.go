@@ -19,14 +19,12 @@ import (
 func HandleFolder(ufo usecase.FoldersUsecase, mu usecase.MsgUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		SetupCORS(r, w)
-		//Always returns a session
-		session, _ := u.GetSession().FromReq(r)
-		// Could do auth here, we're interested in getting the AccountId of the user
-		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+		accIDString, ok, auth := GetAccIDFromSession(u, r)
+		if !auth || !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		accIDString := session.Values["id"].(string)
+
 		accID, err := usecase.ToAccountID(accIDString)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

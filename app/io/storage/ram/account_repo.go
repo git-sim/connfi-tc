@@ -1,7 +1,6 @@
 package ram
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"sync"
@@ -102,21 +101,15 @@ func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
 
 }
 
-func (r *accountRepo) RetrieveByID(id string) (*entity.Account, error) {
-	id64, err := fromStrToID(id)
-	if err != nil {
-		return nil, usecase.NewEs(usecase.EsArgConvFail,
-			fmt.Sprintf("account id64 <- %s", id))
-	}
+func (r *accountRepo) RetrieveByID(id entity.AccountIDType) (*entity.Account, error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
-
-	account, ok := r.accounts[id64]
+	v, ok := r.accounts[id]
 	if ok {
-		ret := account.toEntityAccount(id64)
+		ret := v.toEntityAccount(id)
 		return ret, nil
 	}
-	return nil, nil
+	return nil, usecase.NewEs(usecase.EsNotFound, "account id")
 }
 
 func (r *accountRepo) RetrieveCount() (int, error) {
@@ -158,11 +151,13 @@ func GetIDString(id entity.AccountIDType) string {
 	return strconv.FormatUint(uint64(id), entity.AccountIDStringBase)
 }
 
-func fromStrToID(s string) (entity.AccountIDType, error) {
-	n, err := strconv.ParseUint(s, entity.AccountIDStringBase, entity.AccountIDBits)
-	if err != nil {
-		return 0, usecase.NewEs(usecase.EsArgInvalid,
-			fmt.Sprintf("bad ID string %s, must be uint64 encoded in hex", s))
-	}
-	return entity.AccountIDType(n), nil
-}
+// The below is provided for symmetry,reference but not actually used so far.
+// How to convert from str to id with the correct errors
+//func fromStrToID(s string) (entity.AccountIDType, error) {
+//	n, err := strconv.ParseUint(s, entity.AccountIDStringBase, entity.AccountIDBits)
+//	if err != nil {
+//		return 0, usecase.NewEs(usecase.EsArgInvalid,
+//			fmt.Sprintf("bad ID string %s, must be uint64 encoded in hex", s))
+//	}
+//	return entity.AccountIDType(n), nil
+//}
