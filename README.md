@@ -43,7 +43,7 @@ The major components are:
   * MessageView - Displays the full body of the actively selected message
   * CreateMessage - Used for generating a Reply/ReplyAll (needs to be combined with ComposeForm)
 
-![Front End Screenshot](../../fe_screenshot.PNG)
+![Front End Screenshot](/blob/master/fe_screenshot.PNG)
 
 
 
