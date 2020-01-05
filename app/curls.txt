@@ -1,9 +1,12 @@
 # Set a value
 curl -v -b testcookiefile.txt -c testcookiefile.txt -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+curl -v -b testcookiefile.txt -c testcookiefile.txt -XPUT -d firstname="Bob" -d lastname="Smith" localhost:8080/account?email=bob.smith@mail.com
 
 # Get a value
 curl -v -XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
 curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/account?email=alice.smith@mail.com 
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/account?email=bob.smith@mail.com 
+
 # Get using a body param for the email
 curl -v -GET -b testcookiefile.txt -c testcookiefile.txt -T "@testbody.json" -H "Content-Type: application/json" localhost:8080/account?email=alice.smith@mail.com 
 curl -v -GET -b testcookiefile.txt -c testcookiefile.txt -d "@testbody.json" -H "Content-Type: application/json" localhost:8080/account

@@ -101,8 +101,8 @@ func HandleMessage(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.
 				newval := (formval[0] == "1")
 				ufo.UpdateStarred(accID, mid, newval)
 			}
-
 			// Todo handle Move to Folder Operation
+		case http.MethodOptions:
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

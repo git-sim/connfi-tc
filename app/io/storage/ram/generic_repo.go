@@ -68,11 +68,28 @@ func (gr *genericRepo) RetrieveCount() (int, error) {
 	return len(gr.elems), nil
 }
 
+func (gr *genericRepo) RetrieveFiltered(fn func(interface{}) bool) ([]interface{}, error) {
+	ret, err := gr.RetrieveAll()
+	if err != nil {
+		return nil, err
+	}
+	//out := filter(ret,fn)
+	var cursor int
+	for _, v := range ret {
+		if !fn(v) {
+			continue //drop
+		}
+		ret[cursor] = v
+		cursor++
+	}
+	return ret[:cursor], nil
+}
+
 func (gr *genericRepo) RetrieveAll() ([]interface{}, error) {
 	gr.mtx.Lock()
 	defer gr.mtx.Unlock()
 	ret := make([]interface{}, len(gr.elems))
-	var i int = 0
+	var i int
 	for _, e := range gr.elems {
 		if e != nil {
 			ret[i] = e

@@ -170,7 +170,7 @@ func (f *foldersUsecase) updateViewedStarred(id AccountIDType, mid MsgIDType, fn
 		msg, ok := val.(entity.MsgEntry)
 		if ok {
 			fn(&msg)
-			folders[folderEnum].Update(msgkey, &msg)
+			folders[folderEnum].Update(msgkey, msg)
 		}
 	}
 	if found {

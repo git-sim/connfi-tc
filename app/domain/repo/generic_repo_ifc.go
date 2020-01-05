@@ -7,6 +7,7 @@ type Generic interface {
 	Delete(id GenericKeyT) error
 
 	Retrieve(id GenericKeyT) (interface{}, error)
+	RetrieveFiltered(fn func(interface{}) bool) ([]interface{}, error)
 	RetrieveCount() (int, error)
 	RetrieveAll() ([]interface{}, error) //todo maybe should return map[uint64]*string so we have id and value info
 }
