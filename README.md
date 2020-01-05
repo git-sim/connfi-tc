@@ -33,8 +33,16 @@ There are 3 regions separated by boundaries.
     * [./mdb]()    mongodb implementations of the domain repos. Not yet implemented
   * [./restapi/v1.0/]()  the restapi implementation for the {HTTP | Usecase} boundary.  Not yet implemented
 	
-## Frontend Client Single Page Application (NOT IMPLEMENTED AT ALL)
+## Frontend Client Single Page Application 
 Runs the GUI elements, interacts with the user, and communicates with the backend App's container over a REST ifc.
+The major components are:
+  Top - The top level component that inherits from React.Component
+  Folders - Select which folder to display messages from. Retrieves displays counters. 
+  Messages - Retrieves and Displays Paginated list of messages from the currently selected folder
+  ComposeForm - Form for composing a new message
+  MessageView - Displays the full body of the actively selected message
+  CreateMessage - Used for generating a Reply/ReplyAll (needs to be combined with ComposeForm)
+![Front End Screenshot](/fe_screenshot.png)
 
 
 
