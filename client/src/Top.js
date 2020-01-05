@@ -36,7 +36,7 @@ class Top extends Component {
       /*folders: [{name:"Inbox",val:0},
                 {name:"Archive",val:1},
                 {name:"Sent",val:2},
-                {name:"Scheudled",val:3}
+                {name:"Scheduled",val:3}
               ],*/
       messages: [],
       activeMessage: {},
@@ -44,7 +44,7 @@ class Top extends Component {
     };
 
     this.onChange = this.onChange.bind(this)
-    this.onSubmit = this.onSubmit.bind(this)
+    this.onLogInOut = this.onLogInOut.bind(this)
     this.enablePolling = this.enablePolling.bind(this)
     this.disablePolling = this.disablePolling.bind(this)
     //this.getAccounts = this.getAccounts.bind(this)
@@ -76,7 +76,7 @@ class Top extends Component {
     });
   };
 
-  onSubmit = () => {
+  onLogInOut = () => {
     let { Account } = this.state;
     let { email  } = this.state;
     let { isLoggedIn } = this.state;
@@ -169,8 +169,6 @@ class Top extends Component {
     return accid 
   }
 
-
-
   markAsViewed = (msg, val) => {
     let a = this.GetAccIDObj();
     let m = this.GetMessageIDObj();
@@ -198,45 +196,6 @@ class Top extends Component {
     
   }
 
-  updateTask = id => {
-    axios
-      .put(endpoint + "/api/task/" + id, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      })
-      .then(res => {
-        console.log(res);
-        this.getAccountList();
-      });
-  };
-
-  undoTask = id => {
-    axios
-      .put(endpoint + "/api/undoTask/" + id, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      })
-      .then(res => {
-        console.log(res);
-        this.getAccountList();
-      });
-  };
-
-  deleteTask = id => {
-    axios
-      .delete(endpoint + "/api/deleteTask/" + id, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      })
-      .then(res => {
-        console.log(res);
-        this.getAccountList();
-      });
-  };
-
   setActiveMessage = (msg) => {
     this.setState({ activeMessage: msg });
     this.markAsViewed(msg,true);
@@ -258,7 +217,7 @@ class Top extends Component {
                 Welcome {this.state.Account.Firstname} {this.state.Account.Firstname} {this.state.Account.Email}
               </Menu.Item>
               <Menu.Item position='right'>
-                <Form onSubmit={this.onSubmit}>
+                <Form onSubmit={this.onLogInOut}>
                     <Input
                       type="text"
                       name="email"
@@ -271,8 +230,7 @@ class Top extends Component {
               </Menu.Item>
             </Menu>
           </Grid.Row>
-          <Grid.Row columns={2} height={40}>
-            <Grid.Column width={4}>
+          <Grid.Row height={40}>
               <Segment>
                 <Folders 
                   IsLoggedIn={this.state.isLoggedIn} 
@@ -283,8 +241,6 @@ class Top extends Component {
                   selectSent={() => {this.setFolderid(2)} }
                   selectScheduled={() => {this.setFolderid(3)} }/>
               </Segment>
-            </Grid.Column>
-            <Grid.Column width={10}>
               <Segment>
                 <Messages 
                   ComponentName="Messages"
@@ -296,7 +252,6 @@ class Top extends Component {
                   }
                 />
               </Segment>
-            </Grid.Column>
           </Grid.Row>
           <Grid.Row columns={1} height={50}>
             <Container fluid>
