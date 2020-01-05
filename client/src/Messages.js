@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { Component } from "react";
 import axios from "axios";
-import { Container, Segment, Grid, Pagination, Table, Card, Header, Icon } from "semantic-ui-react";
+import {Segment, Grid, Pagination, Table, Header} from "semantic-ui-react";
 
 
 let endpoint = "http://127.0.0.1:8080";
@@ -60,11 +60,15 @@ class Messages extends Component {
   }
 
   getNumPages = () => {
-    let messagesPerPage = 10
-    if(this.state.messages && this.state.limit > 0) {
-      return this.state.nMsgsInFolder/this.state.limit
+    let messagesPerPage = this.state.limit;
+    if(this.state.messages && messagesPerPage > 0) {
+      let answer = this.state.nMsgsInFolder/messagesPerPage;
+      if(answer < 1) {
+        return 1;
+      }
+      return answer;
     }
-    return 1
+    return 1;
   }
   
   getMessages = () => {
@@ -103,7 +107,6 @@ class Messages extends Component {
         this.setState({
           messages: res.data.Elems.map(msg => {
             let viewed = msg.IsViewed;
-            let starred = msg.IsStarred;
             let timeStr = this.props.FormatTimeFn(msg.M.SentAt)
             return (
               <Table.Row key={msg.Mid} positive={!viewed} onClick={() => this.props.SetActiveMessageFn(msg)}>
@@ -142,10 +145,10 @@ class Messages extends Component {
               <Table.Body>{this.state.messages}</Table.Body>
             </Table>
             <Pagination pointing secondary
-              disabled={this.getNumPages()<=1.0} 
+              disabled={false} 
               totalPages={this.getNumPages()} 
               onPageChange={this.onPageChange}
-              value={1} />
+              />
           </Segment>
         </Grid>
       </div>

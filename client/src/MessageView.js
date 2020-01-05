@@ -1,10 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { Component } from "react";
-import axios from "axios";
-import { Container, Segment, Grid, Button, Table, Header, TextArea, Form, Message, Icon } from "semantic-ui-react";
+import { Segment, Grid, Table, Header } from "semantic-ui-react";
 import CreateMessage from "./CreateMessage";
-
-let endpoint = "http://127.0.0.1:8080";
 
 // could make it a react funcitons
 class MessageView extends Component {

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios";
-import { Segment, Grid, Container, Header, Form, Input, Button, Menu, Icon } from "semantic-ui-react";
+import { Segment, Grid, Container, Header, Form, Input, Button, Menu } from "semantic-ui-react";
+import ComposeForm from "./ComposeForm";
 import Folders from "./Folders";
 import Messages from "./Messages";
 import MessageView from "./MessageView";
@@ -11,7 +12,7 @@ const AccountIDName = "accid"
 const FolderIDName = "folderid"
 const MessageIDName = "msgid"
 const ViewedName = "viewed"
-const StarredName = "starred"
+//const StarredName = "starred"
 
 class Top extends Component {
   constructor(props) {
@@ -19,6 +20,7 @@ class Top extends Component {
 
     this.state = {
       email: "",
+      isComposing: false,
       folderid: 0,
       sort: 0,
       sortorder: -1,
@@ -77,7 +79,6 @@ class Top extends Component {
   };
 
   onLogInOut = () => {
-    let { Account } = this.state;
     let { email  } = this.state;
     let { isLoggedIn } = this.state;
     if(isLoggedIn === false) {
@@ -129,9 +130,15 @@ class Top extends Component {
 
   setFolderid = (idx) => {
     this.setState({
-      folderid: idx
+      folderid: idx,
+      isComposing: false
     })
   }
+
+  composeClick = () => {
+    this.setState({ isComposing: true });
+  }
+
 
   // the GetxxxIDObj are to isolate the lower level components from 
   // details of the actual names of the url params (ie 'accid','folderid','msgid').
@@ -201,6 +208,35 @@ class Top extends Component {
     this.markAsViewed(msg,true);
   }
 
+  renderComposeOrMessages = () => {
+    if(this.state.isComposing) {
+      return (
+        <Container fluid>
+          <ComposeForm
+            ComponentName="New Message"
+            IsLoggedIn={this.state.isLoggedIn} 
+            GetAccountIDFn={this.GetAccIDObj}
+            AccountEmail={this.state.email}
+            />
+        </Container>            
+      );
+    } else {
+      return (
+        <Segment>
+          <Messages 
+          ComponentName="Messages"
+          IsLoggedIn={this.state.isLoggedIn}
+          GetAccountIDFn={this.GetAccIDObj}
+          GetFolderIDFn={this.GetFolderIDObj}
+          FormatTimeFn={formatGoTime}
+          SetActiveMessageFn={(msg) => {this.setActiveMessage(msg)}
+          }/>
+        </Segment>
+      );
+    }
+
+  }
+
   render() {
     return (
       <div>
@@ -230,9 +266,9 @@ class Top extends Component {
               </Menu.Item>
             </Menu>
           </Grid.Row>
-          <Grid.Row height={40}>
-              <Segment>
-                <Folders 
+          <Grid.Row>
+            <Menu fluid>
+              <Folders 
                   IsLoggedIn={this.state.isLoggedIn} 
                   GetAccountIDFn={this.GetAccIDObj}
                   GetFolderIDFn={this.GetFolderIDObj}
@@ -240,23 +276,18 @@ class Top extends Component {
                   selectArchive={() => {this.setFolderid(1)} }
                   selectSent={() => {this.setFolderid(2)} }
                   selectScheduled={() => {this.setFolderid(3)} }/>
-              </Segment>
-              <Segment>
-                <Messages 
-                  ComponentName="Messages"
-                  IsLoggedIn={this.state.isLoggedIn}
-                  GetAccountIDFn={this.GetAccIDObj}
-                  GetFolderIDFn={this.GetFolderIDObj}
-                  FormatTimeFn={formatGoTime}
-                  SetActiveMessageFn={(msg) => {this.setActiveMessage(msg)}
-                  }
-                />
-              </Segment>
+              <Menu floated="right">
+                <Menu.Item>
+                  <Button onClick={this.composeClick}>Compose</Button>
+                </Menu.Item>
+              </Menu>
+            </Menu>
+            {this.renderComposeOrMessages()}
           </Grid.Row>
           <Grid.Row columns={1} height={50}>
             <Container fluid>
               <MessageView 
-                ComponentName="Message"
+                ComponentName="View"
                 IsLoggedIn={this.state.isLoggedIn}
                 GetAccountIDFn={this.GetAccIDObj}
                 ActiveMessage={this.state.activeMessage}

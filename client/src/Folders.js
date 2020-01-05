@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { Component } from "react";
 import axios from "axios";
-import { Segment, Container, Grid, Card, Header, Label, Form, Input, Button, Menu, Icon } from "semantic-ui-react";
+import { Label, Menu } from "semantic-ui-react";
 
 
 let endpoint = "http://127.0.0.1:8080";
@@ -20,11 +20,15 @@ class Folders extends Component {
       limit: 0,
       page: 0,
       task: "",
-     folders: { 0: {name:"Inbox", count: 0, unviewed: 0},
-                1: {name:"Archive", count: 0, unviewed: 0},
-                2: {name:"Sent",count: 0, unviewed: 0},
-                3: {name:"Scheduled",count: 0, unviewed:0 }
-              },
+      folders: [ {key: 0, text:"Inbox",    value: 0, fn: this.props.selectInbox,     count: 0, unviewed: 0},
+                 {key: 1, text:"Archive",  value: 1, fn: this.props.selectArchive,   count: 0, unviewed: 0},
+                 {key: 2, text:"Sent",     value: 2, fn: this.props.selectSent,      count: 0, unviewed: 0},
+                 {key: 3, text:"Scheduled",value: 3, fn: this.props.selectScheduled, count: 0, unviewed: 0}
+      ],
+      foldersLookup: {"Inbox":    0,
+                      "Archive":  1,
+                      "Sent":     2,
+                      "Scheduled":3},
       messages: [],
       _messageTimer: 0
     };
@@ -35,8 +39,7 @@ class Folders extends Component {
   }
 
   componentDidMount() {
-    //this.getAccounts();
-    //this.enablePolling()
+    this.enablePolling()
   }
 
   componentWillUnmount() {
@@ -44,7 +47,7 @@ class Folders extends Component {
   }
 
   enablePolling() {
-    this.timer = setInterval(()=> this.getFolderInfo(), 3000);
+    this.timer = setInterval(() => { this.getFolderCounts(); }, 3000);
     console.log("Enabling polling ",this.timer)
     this.setState({_messageTimer: this.timer})
   }
@@ -53,92 +56,103 @@ class Folders extends Component {
     clearInterval(this.state._messageTimer);
   }
 
-  getFolderInfo = () => {
-    let {limit, page, folderid } = this.state;
+  getFolderCounts = () => {
     let  AccountID = this.props.GetAccountIDFn();
-    let  FolderID = this.props.FolderIDFn();
+    let  FolderID = this.props.GetFolderIDFn();
     let isLoggedIn = this.props.IsLoggedIn;
 
     if(!isLoggedIn) {
       return
     }
 
-    let apiStr = "/folder";
+    let nFolders = this.state.folders.length;
+    let apiStr = endpoint+"/folder";
     apiStr += "?"+AccountID.name+"="+AccountID.value;
-    apiStr += "&"+FolderID.name +"="+folderid;
-    axios.get(endpoint + apiStr,
-      {
-        params: {
-          folderid,
-          limit,
-          page
-        },
-        withCredentials: false
-      } 
-    ).then(res => {
-      console.log(res);
-      if (res.data.Elems) {        
-        this.setState({
-          messages: res.data.Elems.map(msg => {
-            let color = "yellow";
+    apiStr += "&limit=1&page=0&sort=0&sortorder=-1";
+    apiStr += "&"+FolderID.name +"=";
 
-            if (msg.IsViewed) {
-              color = "green";
-            }
-            return (
-              <Card key={msg.Mid} color={color} fluid>
-                <Card.Content>
-                  <Card.Header textAlign="left">
-                    <div style={{ wordWrap: "break-word" }}>{msg.M.M.Subject}</div>
-                  </Card.Header>
-                  <Card.Meta>{msg.M.SentAt}</Card.Meta>
-                </Card.Content>
-              </Card>
-            );
-          })
-        });
-      } else {
-        this.setState({
-          messages: []
-        });
-      }
-    },(error) => {
-      console.log(error);
-      this.disablePolling();
+    // Get the info (message counts) for the folders
+    let fGets = [];
+    for (let i = 0; i < nFolders; i++) {
+      fGets.push(axiosGet(apiStr+i));
+    }
+
+    Promise.all(fGets).then(fRes => {
+      this.setState({
+        folders: this.state.folders.map( (folder) => {
+          folder.count =  fRes[folder.key].data.NumTotal;
+          folder.unviewed = fRes[folder.key].data.NumUnviewed;
+          return folder;      
+        })
+      });
     });
-  };
+  }    
+
+  displayFolderMenu = () => {
+    if(this.props.IsLoggedIn) {
+      return ( this.state.folders.map(folder => {
+        return (
+          <Menu.Item 
+            key={folder.key} 
+            name={folder.text}
+            active={this.state.folderid===folder.value}
+            onClick={this.selectFolder}>
+              {folder.text}
+              { folder.key===0 && 
+                <Label position="right" 
+                  color={(() => 
+                    {if(this.state.folders[folder.key].unviewed>0) 
+                      { return 'teal'} 
+                      else {return 'grey'}
+                    })()}>
+                {folder.unviewed}
+                </Label>
+              }
+              <Label position="right" color="grey">
+                {folder.count}
+              </Label>
+            </Menu.Item>
+          );
+        })
+      );
+    } else {
+      return ( this.state.folders.map(folder => {
+        return(           
+          <Menu.Item 
+            key={folder.key} 
+            name={folder.text}
+            active={this.state.folderid===folder.value}>
+              {folder.text}
+            { (folder.key===0) && <Label position="right" color="grey">0</Label> }
+            <Label position="right" color="grey">0</Label>
+          </Menu.Item>
+        );
+        })
+      );
+    }
+  }
+
+  selectFolder = (e,data) => {
+    let idx = this.state.foldersLookup[data.name]
+    this.setState({
+      folderid: idx
+    });
+    this.state.folders[idx].fn();
+  }
+
 
   render() {
     return (
-      <Grid rows={2}>
-        <Segment>
-          <Grid.Row>
-            <Header className="header" as="h3">{this.props.ComponentName}</Header>
-          </Grid.Row>
-          <Grid.Row>                        
-            <Menu vertical>
-              <Menu.Item name="Inbox" 
-                onClick={this.props.selectInbox} textalign="left" active={this.props.folderid===0}>
-                Inbox
-              </Menu.Item>
-              <Menu.Item name="Archive" 
-                onClick={this.props.selectArchive} textalign="left" active={this.props.folderid===1}>
-                Archive
-              </Menu.Item>
-              <Menu.Item name="Sent" 
-                onClick={this.props.selectSent} textalign="left" active={this.props.folderid===2}>
-                Sent
-              </Menu.Item>
-              <Menu.Item name="Scheduled" 
-                onClick={this.props.selectScheduled} textalign="left" active={this.props.folderid===3}>
-                Scheduled
-              </Menu.Item>
-            </Menu>
-          </Grid.Row>
-        </Segment>
-      </Grid>
+      <Menu
+        defaultActiveIndex={0}>
+        {this.displayFolderMenu()}
+      </Menu>
     );
   }
+}
+
+function axiosGet(apiStr) {
+  return axios.get(apiStr,{withCredential: false});
 }
 
 Folders.propTypes = {
