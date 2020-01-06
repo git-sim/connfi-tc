@@ -3,9 +3,6 @@ import React, { Component } from "react";
 import axios from "axios";
 import { Label, Menu } from "semantic-ui-react";
 
-
-let endpoint = "http://127.0.0.1:8080";
-
 class Folders extends Component {
   constructor(props) {
     super(props);
@@ -154,6 +151,9 @@ class Folders extends Component {
 function axiosGet(apiStr) {
   return axios.get(apiStr,{withCredential: false});
 }
+
+// hack to get the public server working without adding react router
+var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
 
 Folders.propTypes = {
   IsLoggedIn: PropTypes.bool.isRequired,

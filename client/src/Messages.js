@@ -3,9 +3,6 @@ import React, { Component } from "react";
 import axios from "axios";
 import {Segment, Grid, Pagination, Table, Icon, Header} from "semantic-ui-react";
 
-
-let endpoint = "http://127.0.0.1:8080";
-
 class Messages extends Component {
   constructor(props) {
     super(props);
@@ -190,6 +187,8 @@ class Messages extends Component {
   }
 }
 
+// hack to get the public server working without adding react router
+var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
 
 
 Messages.propTypes = {

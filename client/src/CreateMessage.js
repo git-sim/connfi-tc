@@ -3,8 +3,6 @@ import React, { Component } from "react";
 import axios from "axios";
 import { Segment, Grid, Button, Header, TextArea, Form, Message, Icon } from "semantic-ui-react";
 
-let endpoint = "http://127.0.0.1:8080";
-
 // could make it a react functions
 class CreateMessage extends Component {
   constructor(props) {
@@ -158,7 +156,8 @@ class CreateMessage extends Component {
   }
 }
 
-
+// hack to get the public server working without adding react router
+var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
 
 CreateMessage.propTypes = {
   IsLoggedIn: PropTypes.bool.isRequired,

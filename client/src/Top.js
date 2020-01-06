@@ -6,8 +6,6 @@ import Folders from "./Folders";
 import Messages from "./Messages";
 import MessageView from "./MessageView";
 
-let endpoint = "http://127.0.0.1:8080";
-
 const AccountIDName = "accid"
 const FolderIDName = "folderid"
 const MessageIDName = "msgid"
@@ -19,6 +17,7 @@ class Top extends Component {
     super(props);
 
     this.state = {
+	  endpoint: endpoint,
       email: "",
       isComposing: false,
       folderid: 0,
@@ -317,5 +316,8 @@ function formatGoTime(instr) {
   return dt.toLocaleString();
 
 }
+
+// hack to get the public server working without adding react router
+var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
 
 export default Top;

@@ -4,8 +4,6 @@ import axios from "axios";
 import { Header, Segment, Form, Message, Input, TextArea, Button, Table, Icon, Dropdown } from "semantic-ui-react";
 //import CreateMessage from "./CreateMessage";
 
-let endpoint = "http://127.0.0.1:8080";
-
 // could make it a react funcitons
 class ComposeForm extends Component {
   constructor(props) {
@@ -254,7 +252,8 @@ class ComposeForm extends Component {
   }
 }
 
-
+// hack to get the public server working without adding react router
+var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
 
 ComposeForm.propTypes = {
   IsLoggedIn: PropTypes.bool.isRequired,
