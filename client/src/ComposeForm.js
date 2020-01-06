@@ -152,8 +152,6 @@ class ComposeForm extends Component {
     let newSender = this.props.AccountEmail;
     let newRecipients = this.state.to;
     let newSubject = this.state.subject;
-
-    let tostr = "";
     let apiStr = "/message";
     apiStr += "?"+a.name+"="+a.value;
 
