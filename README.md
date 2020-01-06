@@ -31,7 +31,30 @@ There are 3 regions separated by boundaries.
   * [./storage]()  implementation for the {Domain | Storage} and {Usecase | Storage} boundaries
     * [./ram]()    ram based inmemory implementation of the domain repos for testing and demos
     * [./mdb]()    mongodb implementations of the domain repos. Not yet implemented
-  * [./restapi/v1.0/]()  the restapi implementation for the {HTTP | Usecase} boundary.  Not yet implemented
+  * [./rest]()  the restapi implementation for the {HTTP | Usecase} boundary.
+    * The endpoints are 
+      * [localhost:8080/login?email=val]()  
+        * - Logs in / Registers a new user
+      * [localhost:8080/logout?accid=val]() 
+        * - Logs out the session
+      * [localhost:8080/account?email=val]() 
+        * - CRU No delete (hotel california). 
+        * - Most operations require
+      * [localhost:8080/accountList]() 
+        * - Returns the directory info, for autocomplete on FE
+        * - {Email:"val", ID:"val 64bit hexstring", FirstName:"name", LastName:"name"}
+      * [localhost:8080/profile?accid=<val>]() 
+        * - Not implemented there is a basic CRUD functionality for 
+        * - Name, Bio, Avatar Image, Background Image. 
+        * - Plumbed through but not tested at all.
+      * [localhost:8080/folder?accid=<val>&msgid=<val>]() 
+        * - This is used to retrieve a sorted set of messages from a folder (ie inbox)        
+        * - Optional params: 
+      * [localhost:8080/message?accid=<val>&msgid=<val>]()
+        * - A POST enters a new message into the system for delivery (including scheduled messages).  
+        * - If a recipient email isn't registered the message is queued up in a pending repo
+        * - Whenever a CreateUserEvent fires a Listener reads the pending queue gathers any messages for the new user. 
+
 	
 ## Frontend Client Single Page Application 
 Runs the GUI elements, interacts with the user, and communicates with the backend App's container over a REST ifc.
