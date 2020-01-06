@@ -7,6 +7,8 @@ WORKDIR /go/src/github.com/git-sim/tc/app
 # in the above created WORKDIR
 ADD . .
 # Build the go-API-template command inside the container
+RUN go get github.com/gorilla/sessions
+RUN go get github.com/gorilla/websocket
 RUN cd cmd/msgserver && go build -o msgserver 
 
 ## Final Stage
