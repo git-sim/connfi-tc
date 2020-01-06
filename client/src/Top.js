@@ -62,7 +62,7 @@ class Top extends Component {
   }
 
   enablePolling() {
-    this.timer = setInterval(()=> this.setState({}), 3000);
+    this.timer = setInterval(()=> this.setState({}), 900);
     console.log("Enabling polling ",this.timer)
     this.setState({_messageTimer: this.timer})
   }
@@ -229,8 +229,9 @@ class Top extends Component {
           GetAccountIDFn={this.GetAccIDObj}
           GetFolderIDFn={this.GetFolderIDObj}
           FormatTimeFn={formatGoTime}
-          SetActiveMessageFn={(msg) => {this.setActiveMessage(msg)}
-          }/>
+          SetActiveMessageFn={(msg) => {this.setActiveMessage(msg)}}
+          ActiveMessage={this.state.activeMessage}
+          />
         </Segment>
       );
     }
@@ -307,11 +308,14 @@ function formatGoTime(instr) {
   // 2020-01-04T10:35:58.8690175-07:00
   // 0123456789012345678901234567890123
   // 0         1         2         3
-  const year = instr.substring(0,4);
-  const month = instr.substring(5,7);
-  const day = instr.substring(8,10);
-  const time = instr.substring(11,19);
-  return time+" "+day+"/"+month+"/"+year;
+  //const year = instr.substring(0,4);
+  //const month = instr.substring(5,7);
+  //const day = instr.substring(8,10);
+  //const time = instr.substring(11,19);
+  //return time+" "+month+" "+day+" "+year;
+  const dt = new Date(instr);
+  return dt.toLocaleString();
+
 }
 
 export default Top;

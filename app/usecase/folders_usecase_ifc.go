@@ -72,6 +72,7 @@ type FoldersUsecase interface {
 	UpdateStarred(id AccountIDType, mid MsgIDType, newval bool) error
 	ArchiveMsg(id AccountIDType, mid MsgIDType) error
 	UnArchiveMsg(id AccountIDType, mid MsgIDType) error
+	DeleteMsg(id AccountIDType, mid MsgIDType) error
 
 	// Presenter Functions
 	QueryMsgs(id AccountIDType, qp QueryParams) (*MsgQueryOutput, error)

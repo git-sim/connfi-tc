@@ -72,11 +72,22 @@ class MessageView extends Component {
     }
   }
 
+  getTitle = ()=> {
+    if(this.props.IsLoggedIn && 
+      this.props.ActiveMessage !== undefined && 
+      this.props.ActiveMessage.M !== undefined &&
+      this.props.ActiveMessage.M.M !== undefined) {
+        return this.props.ActiveMessage.M.M.Subject;
+    } else {
+      return this.props.ComponentName
+    }
+  }
+
   render() {
     return (
       <div>
         <Segment>
-          <Header className="header" as="h3">{this.props.ComponentName}</Header>
+          <Header className="header" as="h3">{this.getTitle()}</Header>
           {this.messageDisplay()}          
         </Segment>
       </div>

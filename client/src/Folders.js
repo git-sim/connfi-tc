@@ -47,7 +47,7 @@ class Folders extends Component {
   }
 
   enablePolling() {
-    this.timer = setInterval(() => { this.getFolderCounts(); }, 3000);
+    this.timer = setInterval(() => { this.getFolderCounts(); }, 900);
     console.log("Enabling polling ",this.timer)
     this.setState({_messageTimer: this.timer})
   }

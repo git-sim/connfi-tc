@@ -101,7 +101,40 @@ func HandleMessage(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.
 				newval := (formval[0] == "1")
 				ufo.UpdateStarred(accID, mid, newval)
 			}
+
+			if formval, ok := r.Form["dest"]; ok {
+				if formval[0] == "1" {
+					err = ufo.ArchiveMsg(accID, mid)
+				}
+				if formval[0] == "0" {
+					err = ufo.UnArchiveMsg(accID, mid)
+				}
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			}
+
 			// Todo handle Move to Folder Operation
+		case http.MethodDelete:
+			r.ParseForm()
+			msgIDString := r.FormValue("msgid")
+			mid, err := parseIDStringAndReportErr(w, accIDString, msgIDString)
+			if err != nil {
+				return //error already reported
+			}
+
+			accID, err := usecase.ToAccountID(accIDString)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			err = ufo.DeleteMsg(accID, mid)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 		case http.MethodOptions:
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

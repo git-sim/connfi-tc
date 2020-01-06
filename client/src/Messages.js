@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { Component } from "react";
 import axios from "axios";
-import {Segment, Grid, Pagination, Table, Header} from "semantic-ui-react";
+import {Segment, Grid, Pagination, Table, Icon, Header} from "semantic-ui-react";
 
 
 let endpoint = "http://127.0.0.1:8080";
@@ -20,22 +20,22 @@ class Messages extends Component {
       nUnviewedInFolder: 0,
       messages: [],
       selectedMessage: null,
-      _messageTimer: 0
+      _messageTimer: 0,
     };
 
   }
 
   componentDidMount() {
-    this.getMessages();
-    this.enablePolling()
+    //this.getMessages();
+    this.enablePolling();
   }
 
   componentWillUnmount() {
-    this.disablePolling()
+    this.disablePolling();
   }
 
   enablePolling() {
-    this.timer = setInterval(()=> this.getMessages(), 2000);
+    this.timer = setInterval(()=> this.getMessages(), 900);
     console.log("Enabling polling ",this.timer)
     this.setState({_messageTimer: this.timer})
   }
@@ -71,6 +71,32 @@ class Messages extends Component {
     return 1;
   }
   
+  getIsActiveMsg = (mid) => {
+    let isLoggedIn = this.props.IsLoggedIn;
+    let act = this.props.ActiveMessage;
+    if(isLoggedIn && act && parseInt(act.Mid,10) === parseInt(mid,10)) {
+      return true;
+    }
+    return false;
+  }
+
+  getIconName = (isViewed) => {
+    if(isViewed) {
+      return "envelope open outline"
+    } else {
+      return "envelope"
+    }
+  }
+
+  getIconColor = (isViewed) => {
+    if(isViewed) {
+      return "grey"
+    } else {
+      return "teal"
+    }
+
+  }
+
   getMessages = () => {
     let { sort, sortorder, limit, page } = this.state;
     let IsLoggedIn = this.props.IsLoggedIn;
@@ -81,7 +107,7 @@ class Messages extends Component {
       return
     }
 
-    console.log("===getMessages===")
+    //console.log("===getMessages===")
     let apiStr = "/folder"
     apiStr += "?"+AccountID.name+"="+AccountID.value
     apiStr += "&"+FolderID.name+"="+FolderID.value
@@ -96,7 +122,7 @@ class Messages extends Component {
         withCredentials: false
       } 
     ).then(res => {
-      console.log(res);
+      //console.log(res);
       if(res.data) {
         this.setState({
           nMsgsInFolder: res.data.NumTotal,
@@ -107,12 +133,20 @@ class Messages extends Component {
         this.setState({
           messages: res.data.Elems.map(msg => {
             let viewed = msg.IsViewed;
-            let timeStr = this.props.FormatTimeFn(msg.M.SentAt)
+            let timeStr = this.props.FormatTimeFn(msg.M.SentAt);
+            let base = msg.M.M;
             return (
-              <Table.Row key={msg.Mid} positive={!viewed} onClick={() => this.props.SetActiveMessageFn(msg)}>
-                  <Table.Cell>{msg.M.M.SenderEmail}</Table.Cell>
-                  <Table.Cell>{msg.M.M.Subject}</Table.Cell>
-                  <Table.Cell>{timeStr}</Table.Cell>
+              <Table.Row key={msg.Mid} 
+              active={this.getIsActiveMsg(msg.Mid)} 
+              positive={!viewed}
+              onClick={() => this.props.SetActiveMessageFn(msg)}>
+                  <Table.Cell>{base.SenderEmail}</Table.Cell>
+                  <Table.Cell>{base.Subject}</Table.Cell>
+                  <Table.Cell>{timeStr} 
+                      <Icon 
+                        name={this.getIconName(viewed)} 
+                        color={this.getIconColor(viewed)}/>
+                  </Table.Cell>
               </Table.Row>
             );
           })
@@ -162,7 +196,8 @@ Messages.propTypes = {
   IsLoggedIn: PropTypes.bool.isRequired,
   GetAccountIDFn: PropTypes.func.isRequired,
   GetFolderIDFn: PropTypes.func.isRequired,
-  SetActiveMessageFn: PropTypes.func.isRequired
+  SetActiveMessageFn: PropTypes.func.isRequired,
+  ActiveMessage: PropTypes.object.isRequired
 }
 
 Messages.defaultProps = {

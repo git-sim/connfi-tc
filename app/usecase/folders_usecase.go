@@ -125,8 +125,15 @@ func (f *foldersUsecase) moveBetweenFolders(srcEnum int, destEnum int, id Accoun
 	return nil
 }
 
+func (f *foldersUsecase) DeleteMsg(id AccountIDType, mid MsgIDType) error {
+	// Tell the underlying function to do a delete, the filter exec function is a no-op
+	isDelete := true
+	return f.findAndExec(id, mid, isDelete, func(pMsg *entity.MsgEntry) {})
+}
+
 func (f *foldersUsecase) UpdateStarred(id AccountIDType, mid MsgIDType, newval bool) error {
-	return f.updateViewedStarred(id, mid, func(pMsg *entity.MsgEntry) {
+	isDelete := false
+	return f.findAndExec(id, mid, isDelete, func(pMsg *entity.MsgEntry) {
 		if pMsg != nil {
 			pMsg.IsStarred = newval
 		}
@@ -134,7 +141,8 @@ func (f *foldersUsecase) UpdateStarred(id AccountIDType, mid MsgIDType, newval b
 }
 
 func (f *foldersUsecase) UpdateViewed(id AccountIDType, mid MsgIDType, newval bool) error {
-	return f.updateViewedStarred(id, mid, func(pMsg *entity.MsgEntry) {
+	isDelete := false
+	return f.findAndExec(id, mid, isDelete, func(pMsg *entity.MsgEntry) {
 		if pMsg != nil {
 			pMsg.IsViewed = newval
 			if newval {
@@ -146,7 +154,7 @@ func (f *foldersUsecase) UpdateViewed(id AccountIDType, mid MsgIDType, newval bo
 	})
 }
 
-func (f *foldersUsecase) updateViewedStarred(id AccountIDType, mid MsgIDType, fn func(*entity.MsgEntry)) error {
+func (f *foldersUsecase) findAndExec(id AccountIDType, mid MsgIDType, isDelete bool, fn func(*entity.MsgEntry)) error {
 
 	// Messaging rule: only the messages in the Inbox, Archive (or user folders) have viewed,starred facility
 	acckey := repo.GenericKeyT(id)
@@ -170,7 +178,11 @@ func (f *foldersUsecase) updateViewedStarred(id AccountIDType, mid MsgIDType, fn
 		msg, ok := val.(entity.MsgEntry)
 		if ok {
 			fn(&msg)
-			folders[folderEnum].Update(msgkey, msg)
+			if isDelete {
+				folders[folderEnum].Delete(msgkey)
+			} else {
+				folders[folderEnum].Update(msgkey, msg)
+			}
 		}
 	}
 	if found {
