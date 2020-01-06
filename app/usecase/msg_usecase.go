@@ -171,8 +171,14 @@ func (u *msgUsecase) EnqueueMsg(msg *IngressMsg) (MsgIDType, error) {
 				}
 			} else {
 				// Recipient isn't in the system, add the message to the pending queue
+				// Going to create a copy for each recipient...trading off space for complexity
+				// Store the msg using the GUID with the email + mid.
+				// The key for dbPending doesn't matter just needs to be unique for every pair {message,recipient}.
+				// the dbPending is being used as a set, so the id just needs to be unique it doens't need to identify a specific message
+				midstr := MsgIDToString(MsgIDType(newmsg.Mid))
+				dbguid := GetUID(recip + midstr)
 				pNewPendMsg := entity.NewPendingMsgEntry(*pMsgEntry, recip)
-				err = u.dbPending.Create(repo.GenericKeyT(pNewPendMsg.E.Mid), *pNewPendMsg)
+				err = u.dbPending.Create(repo.GenericKeyT(dbguid), *pNewPendMsg)
 				if err != nil {
 					return newid, NewEs(EsInternalError,
 						fmt.Sprintf("%s", err.Error()))
