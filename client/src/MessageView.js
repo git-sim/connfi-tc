@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import React, { Component } from "react";
-import { Segment, Grid, Table, Header } from "semantic-ui-react";
+import { Container, Segment, Grid, Table, Header } from "semantic-ui-react";
 import CreateMessage from "./CreateMessage";
 
 // could make it a react funcitons
@@ -31,10 +31,11 @@ class MessageView extends Component {
   messageDisplay = () => {
     if(this.props.IsLoggedIn && 
       this.props.ActiveMessage && 
-      this.props.ActiveMessage.M) {
+      this.props.ActiveMessage.M && 
+      this.props.ActiveMessage.M.M) {
       return (
         <>
-          <Table compact>
+          <Table compact fixed>
             <Table.Body>
               <Table.Row>
                 <Table.Cell>From: </Table.Cell>
@@ -74,23 +75,27 @@ class MessageView extends Component {
 
   getTitle = ()=> {
     if(this.props.IsLoggedIn && 
-      this.props.ActiveMessage !== undefined && 
-      this.props.ActiveMessage.M !== undefined &&
-      this.props.ActiveMessage.M.M !== undefined) {
+      this.props.ActiveMessage && 
+      this.props.ActiveMessage.M && 
+      this.props.ActiveMessage.M.M) {
         return this.props.ActiveMessage.M.M.Subject;
     } else {
-      return this.props.ComponentName
+      return this.props.ComponentName;
     }
   }
 
   render() {
     return (
-      <div>
+      <>
         <Segment>
-          <Header className="header" as="h3">{this.getTitle()}</Header>
+          <Container>
+            <Header className="header" as="h3">
+              {this.getTitle()}
+            </Header>
+          </Container>
           {this.messageDisplay()}          
         </Segment>
-      </div>
+      </>
     );
   }
 }

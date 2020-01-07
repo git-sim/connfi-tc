@@ -12,37 +12,36 @@ const MessageIDName = "msgid"
 const ViewedName = "viewed"
 //const StarredName = "starred"
 
+// hack to get the public server working without adding react router
+var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
+
+const INITIAL_STATE = {
+    endpoint: endpoint,
+    email: "",
+    isComposing: false,
+    folderid: 0,
+    sort: 0,
+    sortorder: -1,
+    limit: 10,
+    page: 0,
+    Account: {
+      ID:"",
+      Email:"",
+      FirstName:"",
+      LastName:""
+    },
+    isLoggedIn: false,
+    task: "",
+    messages: [],
+    activeMessage: {},
+    _messageTimer: 0
+}
+
 class Top extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-	  endpoint: endpoint,
-      email: "",
-      isComposing: false,
-      folderid: 0,
-      sort: 0,
-      sortorder: -1,
-      limit: 10,
-      page: 0,
-      Account: {
-        ID:"",
-        Email:"",
-        FirstName:"",
-        LastName:""
-      },
-      isLoggedIn: false,
-      task: "",
-      items: [],
-      /*folders: [{name:"Inbox",val:0},
-                {name:"Archive",val:1},
-                {name:"Sent",val:2},
-                {name:"Scheduled",val:3}
-              ],*/
-      messages: [],
-      activeMessage: {},
-      _messageTimer: 0
-    };
+    this.state = INITIAL_STATE;
 
     this.onChange = this.onChange.bind(this)
     this.onLogInOut = this.onLogInOut.bind(this)
@@ -117,13 +116,8 @@ class Top extends Component {
         }, (error) => {
           console.log(error)
         });
-      this.setState({
-        Account: {},
-        isLoggedIn: false,
-        email: "",
-        messages: []
-      });
-      this.disablePolling();
+        this.disablePolling();
+        this.setState({ ...INITIAL_STATE });
     }
   };
 
@@ -237,65 +231,95 @@ class Top extends Component {
 
   }
 
+  renderLoggedOut = () => {
+    return (
+      <Grid rows={2}>
+      <Grid.Row height={5}>
+        <Header className="header" as="h2">TC Messaging</Header>
+      </Grid.Row>
+      <Grid.Row height={5}>
+        <Form onSubmit={this.onLogInOut}>
+            <Input
+              type="text"
+              name="email"
+              onChange={this.onChange}
+              value={this.state.email}
+              placeholder="Email Address"
+            />
+            <Button >{this.state.isLoggedIn ? "Logout" : "Login"}</Button>
+        </Form>
+      </Grid.Row>
+    </Grid>
+    );
+  }
+
+  renderLoggedIn = () => {
+    return (
+    <Grid rows={4}>
+      <Grid.Row height={5}>
+        <Header className="header" as="h2">TC Messaging</Header>
+      </Grid.Row>
+      <Grid.Row height={5}>
+        <Menu fluid>
+          <Menu.Item>
+            Image
+          </Menu.Item>
+          <Menu.Item>
+            Welcome {this.state.Account.Firstname} {this.state.Account.Firstname} {this.state.Account.Email}
+          </Menu.Item>
+          <Menu.Item position="right">
+            <Form onSubmit={this.onLogInOut}>
+                <Button >{this.state.isLoggedIn ? "Logout" : "Login"}</Button>
+            </Form>
+          </Menu.Item>
+        </Menu>
+      </Grid.Row>
+      <Grid.Row>
+        <Menu fluid>
+          <Folders 
+              IsLoggedIn={this.state.isLoggedIn} 
+              GetAccountIDFn={this.GetAccIDObj}
+              GetFolderIDFn={this.GetFolderIDObj}
+              selectInbox={() => {this.setFolderid(0)} }
+              selectArchive={() => {this.setFolderid(1)} }
+              selectSent={() => {this.setFolderid(2)} }
+              selectScheduled={() => {this.setFolderid(3)} }/>
+          <Menu floated="right">
+            <Menu.Item>
+              <Button onClick={this.composeClick}>Compose</Button>
+            </Menu.Item>
+          </Menu>
+        </Menu>
+        {this.renderComposeOrMessages()}
+      </Grid.Row>
+      <Grid.Row height={5}>
+        <Container fluid>
+          <MessageView 
+            ComponentName="View"
+            IsLoggedIn={this.state.isLoggedIn}
+            GetAccountIDFn={this.GetAccIDObj}
+            ActiveMessage={this.state.activeMessage}
+            AccountEmail={this.state.email}
+            FormatTimeFn={formatGoTime}/>
+          </Container>
+      </Grid.Row>
+    </Grid>
+    );
+  }
+
+  renderTop = () => {
+    // Getting to be a big enought difference should be different files
+    if(this.state.isLoggedIn) {
+      return this.renderLoggedIn(); 
+    } else {
+      return this.renderLoggedOut(); 
+    } 
+  }
+
   render() {
     return (
       <div>
-        <Grid rows={4}>
-          <Grid.Row height={5}>
-            <Header className="header" as="h2">TC Messaging</Header>
-          </Grid.Row>
-          <Grid.Row height={5}>
-            <Menu fluid>
-              <Menu.Item>
-                Image
-              </Menu.Item>
-              <Menu.Item>
-                Welcome {this.state.Account.Firstname} {this.state.Account.Firstname} {this.state.Account.Email}
-              </Menu.Item>
-              <Menu.Item position='right'>
-                <Form onSubmit={this.onLogInOut}>
-                    <Input
-                      type="text"
-                      name="email"
-                      onChange={this.onChange}
-                      value={this.state.email}
-                      placeholder="Email Address"
-                    />
-                    <Button >{this.state.isLoggedIn ? "Logout" : "Login"}</Button>
-                </Form>
-              </Menu.Item>
-            </Menu>
-          </Grid.Row>
-          <Grid.Row>
-            <Menu fluid>
-              <Folders 
-                  IsLoggedIn={this.state.isLoggedIn} 
-                  GetAccountIDFn={this.GetAccIDObj}
-                  GetFolderIDFn={this.GetFolderIDObj}
-                  selectInbox={() => {this.setFolderid(0)} }
-                  selectArchive={() => {this.setFolderid(1)} }
-                  selectSent={() => {this.setFolderid(2)} }
-                  selectScheduled={() => {this.setFolderid(3)} }/>
-              <Menu floated="right">
-                <Menu.Item>
-                  <Button onClick={this.composeClick}>Compose</Button>
-                </Menu.Item>
-              </Menu>
-            </Menu>
-            {this.renderComposeOrMessages()}
-          </Grid.Row>
-          <Grid.Row columns={1} height={50}>
-            <Container fluid>
-              <MessageView 
-                ComponentName="View"
-                IsLoggedIn={this.state.isLoggedIn}
-                GetAccountIDFn={this.GetAccIDObj}
-                ActiveMessage={this.state.activeMessage}
-                AccountEmail={this.state.email}
-                FormatTimeFn={formatGoTime}/>
-              </Container>
-          </Grid.Row>
-        </Grid>
+        {this.renderTop()}
       </div>
     );
   }
@@ -316,8 +340,5 @@ function formatGoTime(instr) {
   return dt.toLocaleString();
 
 }
-
-// hack to get the public server working without adding react router
-var endpoint = window.location.protocol+"//"+window.location.hostname+":8080"
 
 export default Top;

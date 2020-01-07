@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { Component } from "react";
 import axios from "axios";
-import { Label, Menu } from "semantic-ui-react";
+import { Label, Menu, Icon} from "semantic-ui-react";
 
 class Folders extends Component {
   constructor(props) {
@@ -96,13 +96,14 @@ class Folders extends Component {
             onClick={this.selectFolder}>
               {folder.text}
               { folder.key===0 && 
-                <Label position="right" 
+                <Label position="right"
                   color={(() => 
                     {if(this.state.folders[folder.key].unviewed>0) 
                       { return 'teal'} 
                       else {return 'grey'}
                     })()}>
-                {folder.unviewed}
+                  <Icon name='mail'/>
+                  {folder.unviewed}
                 </Label>
               }
               <Label position="right" color="grey">
