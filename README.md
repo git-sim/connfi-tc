@@ -33,27 +33,48 @@ There are 3 regions separated by boundaries.
     * [./mdb]()    mongodb implementations of the domain repos. Not yet implemented
   * [./rest]()  the restapi implementation for the {HTTP | Usecase} boundary.
     * The endpoints are 
+
+      * [/login?email=val]() 
+        Method * - Create a new login session
+      * [/logout/{accountID}]
+        Method * - Logout a session
+
+### REST API
+
+#### accounts: Information about user accounts. Contains id, email, firstname, lastname  
+| Method | URI | Input | Output | Notes |
+| :---   | :---| :---  | :---   | :---  |
+| POST |/accounts | Account as body param<br/> {email,firstname,lastname} | Returns id, if email is unique | Registers a New Account in the system |
+| GET |/accounts |?[limit=n]<br/>&[offset=n] | {TotalNumOfAccounts, NumAccounts, Accounts[]} | Get the list of accounts.<br/>limit and offset are optional.<br/>If not specified means all accounts.|
+| GET |/accounts/{accountID} |none |{ID, email, firstname, lastname} |Returns specific account info.  |
+| PUT |/accounts/{accountID} |Account {email,firstname,lastname} |   |Replaces the account info |
+|DELETE |/accounts/{accountID} |none || Delete account |
+
+
+
+  ---- Original API here for comparison Remove when the refactored api is live ----
+    * The endpoints are 
       * [localhost:8080/login?email=val]()  
-        * - Logs in / Registers a new user
+        * Logs in / Registers a new user
       * [localhost:8080/logout?accid=val]() 
-        * - Logs out the session
+        * Logs out the session
       * [localhost:8080/account?email=val]() 
-        * - CRU No delete (hotel california). 
-        * - Most operations require
+        * CRU No delete (hotel california). 
+        * Most operations require
       * [localhost:8080/accountList]() 
-        * - Returns the directory info, for autocomplete on FE
-        * - {Email:"val", ID:"val 64bit hexstring", FirstName:"name", LastName:"name"}
+        * Returns the directory info, for autocomplete on FE
+        * {Email:"val", ID:"val 64bit hexstring", FirstName:"name", LastName:"name"}
       * [localhost:8080/profile?accid=<val>]() 
-        * - Not implemented there is a basic CRUD functionality for 
-        * - Name, Bio, Avatar Image, Background Image. 
-        * - Plumbed through but not tested at all.
+        * Not implemented there is a basic CRUD functionality for 
+        * Name, Bio, Avatar Image, Background Image. 
+        * Plumbed through but not tested at all.
       * [localhost:8080/folder?accid=<val>&msgid=<val>]() 
-        * - This is used to retrieve a sorted set of messages from a folder (ie inbox)        
-        * - Optional params: 
+        * This is used to retrieve a sorted set of messages from a folder (ie inbox)        
+        * Optional params: 
       * [localhost:8080/message?accid=<val>&msgid=<val>]()
-        * - A POST enters a new message into the system for delivery (including scheduled messages).  
-        * - If a recipient email isn't registered the message is queued up in a pending repo
-        * - Whenever a CreateUserEvent fires a Listener reads the pending queue gathers any messages for the new user. 
+        * A POST enters a new message into the system for delivery (including scheduled messages).  
+        * If a recipient email isn't registered the message is queued up in a pending repo
+        * Whenever a CreateUserEvent fires a Listener reads the pending queue gathers any messages for the new user. 
 
 	
 ## Frontend Client Single Page Application 
