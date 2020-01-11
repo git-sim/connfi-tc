@@ -57,7 +57,35 @@ There are 3 regions separated by boundaries.
 | GET |/accounts/{accountID}<br/>/folders |NA |Returns list of folders {TotalNumberOfFolders, FolderInfo[]} |Summary of folder  info.<br/> FolderInfo:= <br/> {Name, Idx, NumTotal, NumUnviewed} |
 |GET |/accounts/{accountID}<br/>/folders/{folderID} |?[limit=n]<br/>&[page=n]<br/>&[sortorder=-1 \| 1]<br/>&[sort= time\|sender\|subject]| {HeaderInfo, Messages[]} |Returns the messages in a folder sorted/limited/paged for the frontend.<br/>Page size is specified by limit.<br/>So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10.<br/>HeaderInfo is {{Original query params}, FolderInfo} |
 
- 
+#### messages: Under '/accounts/{accountID}' . Access to messages for a particular user regardless of what folder they are in. Mainly used for creating, deleting, and marking messages as read. Retrieval/Display of messages is best done via the 'account/{accountID}/folders/{folderID}' endpoint. 
+
+POST /accounts/{accountID}/messages 
+    Creates a new message  
+    Input:  message as body param  
+    Output: Returns message id of created message  
+
+GET ./messages 
+    List of messages limit and offset are optional. If not specified means all messages.  
+    Input:  ?[limit=n]  
+            &[offset=n]  
+    Output: Returns the total number of messages, and a list of messages(limit,offset)  
+            {TotalNumberOfMessages,  Messages[]} 
+
+GET  ./messages/{messageID}  
+    Returns a specific message  
+    Input:  none  
+    Output: {Message}  
+
+PUT ./messages/{messageID}  
+    Modify a message in a folder to mark it as viewed.  
+    Input:  viewed=0\|1  
+    Output: none  
+
+DELETE ./messages/{messageID}  
+    Deletes a message  
+    Input:  none
+    Output: none
+  
   ---- Original API here for comparison Remove when the refactored api is live ----
 
     * The endpoints are 
