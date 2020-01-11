@@ -59,32 +59,32 @@ There are 3 regions separated by boundaries.
 
 #### messages: Under '/accounts/{accountID}' . Access to messages for a particular user regardless of what folder they are in. Mainly used for creating, deleting, and marking messages as read. Retrieval/Display of messages is best done via the 'account/{accountID}/folders/{folderID}' endpoint. 
 
-POST /accounts/{accountID}/messages 
+* POST /accounts/{accountID}/messages  
     Creates a new message  
     Input:  message as body param  
     Output: Returns message id of created message  
 
-GET ./messages 
-    List of messages limit and offset are optional. If not specified means all messages.  
+* GET ./messages  
+    List of messages limit and offset are optional. If not specified means all messages.    
     Input:  ?[limit=n]  
             &[offset=n]  
     Output: Returns the total number of messages, and a list of messages(limit,offset)  
-            {TotalNumberOfMessages,  Messages[]} 
+            {TotalNumberOfMessages,  Messages[]}  
 
-GET  ./messages/{messageID}  
+* GET  ./messages/{messageID}  
     Returns a specific message  
     Input:  none  
     Output: {Message}  
 
-PUT ./messages/{messageID}  
+* PUT ./messages/{messageID}  
     Modify a message in a folder to mark it as viewed.  
     Input:  viewed=0\|1  
     Output: none  
 
-DELETE ./messages/{messageID}  
+* DELETE ./messages/{messageID}  
     Deletes a message  
-    Input:  none
-    Output: none
+    Input:  none  
+    Output: none  
   
   ---- Original API here for comparison Remove when the refactored api is live ----
 
