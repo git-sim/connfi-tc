@@ -55,7 +55,7 @@ There are 3 regions separated by boundaries.
 | Method | URI | Input | Output | Notes |
 | :---   | :---| :---  | :---   | :---  |
 | GET |/accounts/{accountID}<br/>/folders |NA |Returns list of folders {TotalNumberOfFolders, FolderInfo[]} |Summary of folder  info.<br/> FolderInfo:= <br/> {Name, Idx, NumTotal, NumUnviewed} |
-|GET |/accounts/{accountID}<br/>/folders/{folderID} |?[limit=n]<br/>&[page=n]<br/>&[sortorder=-1 \| 1]<br/>&[sort =time\|sender\|subject]|   |{HeaderInfo, Messages[]} |Returns the messages in a folder sorted/limited/paged for the frontend.<br/>Page size is specified by limit.<br/>So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10.<br/>HeaderInfo is {{Original query params}, FolderInfo} |
+|GET |/accounts/{accountID}<br/>/folders/{folderID} |?[limit=n]<br/>&[page=n]<br/>&[sortorder=-1 \| 1]<br/>&[sort= time\|sender\|subject]| {HeaderInfo, Messages[]} |Returns the messages in a folder sorted/limited/paged for the frontend.<br/>Page size is specified by limit.<br/>So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10.<br/>HeaderInfo is {{Original query params}, FolderInfo} |
 
  
   ---- Original API here for comparison Remove when the refactored api is live ----
