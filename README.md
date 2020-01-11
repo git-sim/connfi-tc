@@ -64,27 +64,27 @@ There are 3 regions separated by boundaries.
     Input:  message as body param  
     Output: Returns message id of created message  
 
-* GET ./messages  
+* GET /accounts/{accountID}/messages  
     List of messages limit and offset are optional. If not specified means all messages.    
-    Input:  ?[limit=n]  
+    Input:  |?[limit=n]  
             &[offset=n]  
-    Output: Returns the total number of messages, and a list of messages(limit,offset)  
+    Output: |Returns the total number of messages, and a list of messages(limit,offset)  
             {TotalNumberOfMessages,  Messages[]}  
 
-* GET  ./messages/{messageID}  
+* GET  /accounts/{accountID}/messages/{messageID}  
     Returns a specific message  
-    Input:  none  
-    Output: {Message}  
+    Input:  |none  
+    Output: |{Message}  
 
-* PUT ./messages/{messageID}  
+* PUT /accounts/{accountID}/messages/{messageID}  
     Modify a message in a folder to mark it as viewed.  
-    Input:  viewed=0\|1  
-    Output: none  
+    Input:  |viewed=0\|1  
+    Output: |none  
 
-* DELETE ./messages/{messageID}  
+* DELETE /accounts/{accountID}/messages/{messageID}  
     Deletes a message  
-    Input:  none  
-    Output: none  
+    Input:  |none  
+    Output: |none  
   
   ---- Original API here for comparison Remove when the refactored api is live ----
 
