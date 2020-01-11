@@ -60,31 +60,31 @@ There are 3 regions separated by boundaries.
 #### messages: Under '/accounts/{accountID}' . Access to messages for a particular user regardless of what folder they are in. Mainly used for creating, deleting, and marking messages as read. Retrieval/Display of messages is best done via the 'account/{accountID}/folders/{folderID}' endpoint. 
 
 * POST /accounts/{accountID}/messages  
-    Creates a new message  
-    Input:  message as body param  
-    Output: Returns message id of created message  
+    * Creates a new message  
+    * Input:  message as body param  
+    * Output: Returns message id of created message  
 
 * GET /accounts/{accountID}/messages  
-    List of messages limit and offset are optional. If not specified means all messages.    
-    Input:  |?[limit=n]  
+    * List of messages limit and offset are optional. If not specified means all messages.    
+    * Input:  ?[limit=n]  
             &[offset=n]  
-    Output: |Returns the total number of messages, and a list of messages(limit,offset)  
+    * Output: Returns the total number of messages, and a list of messages(limit,offset)  
             {TotalNumberOfMessages,  Messages[]}  
 
 * GET  /accounts/{accountID}/messages/{messageID}  
-    Returns a specific message  
-    Input:  |none  
-    Output: |{Message}  
+    * Returns a specific message  
+    * Input:  none  
+    * Output: {Message}  
 
 * PUT /accounts/{accountID}/messages/{messageID}  
-    Modify a message in a folder to mark it as viewed.  
-    Input:  |viewed=0\|1  
-    Output: |none  
+    * Modify a message in a folder to mark it as viewed.  
+    * Input:  viewed=0\|1  
+    * Output: none  
 
 * DELETE /accounts/{accountID}/messages/{messageID}  
-    Deletes a message  
-    Input:  |none  
-    Output: |none  
+    * Deletes a message  
+    * Input:  none  
+    * Output: none  
   
   ---- Original API here for comparison Remove when the refactored api is live ----
 
