@@ -45,14 +45,21 @@ There are 3 regions separated by boundaries.
 | Method | URI | Input | Output | Notes |
 | :---   | :---| :---  | :---   | :---  |
 | POST |/accounts | Account as body param<br/> {email,firstname,lastname} | Returns id, if email is unique | Registers a New Account in the system |
-| GET |/accounts |?[limit=n]<br/>&[offset=n] | {TotalNumOfAccounts, NumAccounts, Accounts[]} | Get the list of accounts.<br/>limit and offset are optional.<br/>If not specified means all accounts.|
+| GET |/accounts |?[limit=n]<br/>&[offset=n] | {TotalNumOfAccounts, Accounts[]} | Get the list of accounts.<br/>limit and offset are optional.<br/>If not specified means all accounts.|
 | GET |/accounts/{accountID} |none |{ID, email, firstname, lastname} |Returns specific account info.  |
 | PUT |/accounts/{accountID} |Account {email,firstname,lastname} |   |Replaces the account info |
 |DELETE |/accounts/{accountID} |none || Delete account |
 
+#### folders: Under '/accounts/{accountID}'. Contains summary info about user folders (inbox, archive, etc). A particular folder can be queried for all the messages in the folder, with sorting. 
 
+| Method | URI | Input | Output | Notes |
+| :---   | :---| :---  | :---   | :---  |
+| GET |./folders |NA |Returns list of folders {TotalNumberOfFolders, FolderInfo[]} |Summary of folder  info.<br/> FolderInfo:= <br/> {Name, Idx, NumTotal, NumUnviewed} |
+|GET |./folders/{folderID} |?[limit=n]<br/>&[page=n]<br/>&[sortorder=-1 | 1]<br/>&[sort =time|sender|subject]|   |{HeaderInfo, Messages[]} |Returns the messages in a folder sorted/limited/paged for the frontend.<br/>Page size is specified by limit.<br/>So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10.<br/>HeaderInfo is {{Original query params}, FolderInfo} |
 
+ 
   ---- Original API here for comparison Remove when the refactored api is live ----
+
     * The endpoints are 
       * [localhost:8080/login?email=val]()  
         * Logs in / Registers a new user
