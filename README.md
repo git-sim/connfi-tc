@@ -42,37 +42,36 @@ There are 3 regions separated by boundaries.
 ### REST API
 
 #### accounts: Information about user accounts. Contains id, email, firstname, lastname  
-* POST /accounts   
+* POST /accounts
   * Registers a New Account in the system   
   * Input: Account as body param   
     * {email,firstname,lastname}   
   * Output: Returns id of the newly created account if email was unique   
 
-* GET /accounts  
+* GET /accounts
   * Get the list of accounts.  
   * Input:  limit and offset are optional. If not specified means all accounts.   
     * ?[limit=n]  
     * &[offset=n]  
   * Output: {TotalNumOfAccounts, Accounts[]}  
 
-* GET /accounts/{accountID}  
+* GET /accounts/{accountID}
   * Returns specific account info.  
   * Input: none  
   * Output: {ID, email, firstname, lastname}   
 
-* PUT /accounts/{accountID}   
+* PUT /accounts/{accountID}
   * Updates the account info   
   * Input: AccountInfo {email,firstname,lastname}   
   * Output: none
 
-* DELETE /accounts/{accountID} 
+* DELETE /accounts/{accountID}
   * Delete account 
   * Input: none
   * Output: none
 
 #### folders: Contains summary info about user folders (inbox, archive, etc). A particular folder can be queried for all the messages in the folder, with sorting. 
-
-* GET /accounts/{accountID}/folders  
+* GET /accounts/{accountID}/folders
   * Returns list of folders  
   * Input: none  
   * Output: {TotalNumberOfFolders, FolderInfo[]}  
@@ -98,8 +97,7 @@ There are 3 regions separated by boundaries.
 * GET /accounts/{accountID}/messages  
   * List of messages limit and offset are optional. If not specified means all messages.    
   * Input:  
-    * ?[limit=n]
-    * &[offset=n]  
+    * [?limit=n&offset=n]  
   * Output: Returns the total number of messages, and a list of messages(limit,offset)  
             {TotalNumberOfMessages,  Messages[]}  
 
@@ -119,77 +117,63 @@ There are 3 regions separated by boundaries.
   * Output: none  
 
 #### threads: Used for displaying messages as threads. Possibly move to under folders.
-* GET /accounts/{accountID}/threads    
+* GET /accounts/{accountID}/threads
   * Returns list of threadInfos for the account    
   * Input: limit and offset are optional, means all if omitted  
-    * ?[limit=n]  
-    * &[offset=n]  
+    * [?limit=n&offset=n]  
   * Output: {TotalNumberOfThreads, numRet, ThreadInfo[]}  
     * where ThreadInfo := {IsMuted, NumTotalMsgsInThread, NumUnvieiwedMsgsInThread, MessageID[]}   
-
-* GET /accounts/{accountID}/threads/{threadID}    
+* GET /accounts/{accountID}/threads/{threadID}
   * Returns info for a particular thread  
   * Input: none   
   * Output: {ThreadInfo}  (see above)  
-
-* PUT /accounts/{accountID}/threads/{threadID}    
+* PUT /accounts/{accountID}/threads/{threadID} 
   * Sets the mute param for the thread   
   * Input: mute=0|1    
   * Output: none   
-
-* DELETE /accounts/{accountID}/threads/{threadID}  
+* DELETE /accounts/{accountID}/threads/{threadID}
   * Deletes all the messages in the thread   
  
 #### profile: Get/Set the profile for a user.  Broken out by fields to encourage use of the individual requrests. Since the profile may get data/added removed keeps the API the the least coupled if clients ask for the profile fields by name instead of the whole profile. 
-
 * GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  
   * Returns the entire profile  
   * Input: none  
   * Output: {Profile}  
     * where Profile:= {ID, name, bio, avatarImg, bgImg }  
-
 * GET /account/{accountID}/profile/name  
   * Returns name string  
   * Input: none  
   * Output: {name}  
-
 * GET /account/{accountID}/profile/bio  
   * Returns bio string  
   * Input: none  
   * Output: {bio}  
-
 * GET /account/{accountID}/profile/avatar  
   * Returns avatar image as a .png  
   * Input: none  
   * Output: {avatar}  
-
 * GET /account/{accountID}/profile/bg  
   * Returns background image as a .png  
   * Input: none  
   * Output: {bg}  
-  
 PUT's should be symmetric to the gets above 
 * PUT /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  
   * Sets the entire profile    
   * Input: {Profile}  
     * where Profile:= {ID, name, bio, avatarImg, bgImg }  
   * Output:  none  
-
 * PUT /account/{accountID}/profile/name   
   * Sets name string  
   * Input: {name}  
   * Output: none   
-
 * PUT /account/{accountID}/profile/bio  
   * Sets bio string  
   * Input: {bio}  
   * Output: none  
-
 * PUT /account/{accountID}/profile/avatar  
   * Sets avatar image as a .png  
   * Input: none  
   * Output: {avatar}  
-
 * PUT /account/{accountID}/profile/bg  
   * Sets background image as a .png  
   * Input: {bg}    
