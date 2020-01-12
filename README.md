@@ -42,50 +42,81 @@ There are 3 regions separated by boundaries.
 ### REST API
 
 #### accounts: Information about user accounts. Contains id, email, firstname, lastname  
-| Method | URI | Input | Output | Notes |
-| :---   | :---| :---  | :---   | :---  |
-| POST |/accounts | Account as body param<br/> {email,firstname,lastname} | Returns id, if email is unique | Registers a New Account in the system |
-| GET |/accounts |?[limit=n]<br/>&[offset=n] | {TotalNumOfAccounts, Accounts[]} | Get the list of accounts.<br/>limit and offset are optional.<br/>If not specified means all accounts.|
-| GET |/accounts/{accountID} |none |{ID, email, firstname, lastname} |Returns specific account info.  |
-| PUT |/accounts/{accountID} |Account {email,firstname,lastname} |   |Replaces the account info |
-|DELETE |/accounts/{accountID} |none || Delete account |
+* POST /accounts   
+  * Registers a New Account in the system   
+  * Input: Account as body param   
+    * {email,firstname,lastname}   
+  * Output: Returns id of the newly created account if email was unique   
 
-#### folders: Under '/accounts/{accountID}'. Contains summary info about user folders (inbox, archive, etc). A particular folder can be queried for all the messages in the folder, with sorting. 
+* GET /accounts  
+  * Get the list of accounts.  
+  * Input:  limit and offset are optional. If not specified means all accounts.   
+    * ?[limit=n]  
+    * &[offset=n]  
+  * Output: {TotalNumOfAccounts, Accounts[]}  
 
-| Method | URI | Input | Output | Notes |
-| :---   | :---| :---  | :---   | :---  |
-| GET |/accounts/{accountID}<br/>/folders |NA |Returns list of folders {TotalNumberOfFolders, FolderInfo[]} |Summary of folder  info.<br/> FolderInfo:= <br/> {Name, Idx, NumTotal, NumUnviewed} |
-|GET |/accounts/{accountID}<br/>/folders/{folderID} |?[limit=n]<br/>&[page=n]<br/>&[sortorder=-1 \| 1]<br/>&[sort= time\|sender\|subject]| {HeaderInfo, Messages[]} |Returns the messages in a folder sorted/limited/paged for the frontend.<br/>Page size is specified by limit.<br/>So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10.<br/>HeaderInfo is {{Original query params}, FolderInfo} |
+* GET /accounts/{accountID}  
+  * Returns specific account info.  
+  * Input: none  
+  * Output: {ID, email, firstname, lastname}   
 
-#### messages: Under '/accounts/{accountID}' . Access to messages for a particular user regardless of what folder they are in. Mainly used for creating, deleting, and marking messages as read. Retrieval/Display of messages is best done via the 'account/{accountID}/folders/{folderID}' endpoint. 
+* PUT /accounts/{accountID}   
+  * Replaces the account info   
+  * Input: AccountInfo {email,firstname,lastname}   
+  * Output: none
+  
+* DELETE /accounts/{accountID} 
+  * Delete account 
+  * Input: none
+  * Output: none
+
+#### folders: Contains summary info about user folders (inbox, archive, etc). A particular folder can be queried for all the messages in the folder, with sorting. 
+
+* GET /accounts/{accountID}/folders  
+  * Returns list of folders  
+  * Input: none  
+  * Output: {TotalNumberOfFolders, FolderInfo[]}  
+    * Where FolderInfo:= {FolderName, Idx, NumTotal, NumUnviewed} 
+
+* GET /accounts/{accountID}/folders/{folderID}  
+  * Returns the messages in a folder sorted/limited/paged for the frontend. Page size is specified by limit. So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10. 
+  * Input:  
+    * ?[limit=n]  
+    * &[page=n]  
+    * &[sortorder=-1 \| 1]  
+    * &[sort= time\|sender\|subject]  
+  * Output: {HeaderInfo, Messages[]}  
+    * Where HeaderInfo is {{InputQueryParams}, FolderInfo} 
+
+#### messages: Access to messages for a particular user regardless of what folder they are in. Mainly used for creating, deleting, and marking messages as read. Retrieval/Display of messages is best done via the 'account/{accountID}/folders/{folderID}' endpoint. 
 
 * POST /accounts/{accountID}/messages  
-    * Creates a new message  
-    * Input:  message as body param  
-    * Output: Returns message id of created message  
+  * Creates a new message  
+  * Input:  message as body param  
+  * Output: Returns message id of created message  
 
 * GET /accounts/{accountID}/messages  
-    * List of messages limit and offset are optional. If not specified means all messages.    
-    * Input:  
-      * ?[limit=n]
-      * &[offset=n]  
-    * Output: Returns the total number of messages, and a list of messages(limit,offset)  
+  * List of messages limit and offset are optional. If not specified means all messages.    
+  * Input:  
+    * ?[limit=n]
+    * &[offset=n]  
+  * Output: Returns the total number of messages, and a list of messages(limit,offset)  
             {TotalNumberOfMessages,  Messages[]}  
 
-* GET  /accounts/{accountID}/messages/{messageID}  
-    * Returns a specific message  
-    * Input:  none  
-    * Output: {Message}  
+* GET /accounts/{accountID}/messages/{messageID}  
+  * Returns a specific message  
+  * Input:  none  
+  * Output: {Message}  
 
 * PUT /accounts/{accountID}/messages/{messageID}  
-    * Modify a message in a folder to mark it as viewed.  
-    * Input:  viewed=0\|1  
-    * Output: none  
+  * Modify a message in a folder to mark it as viewed.  
+  * Input:  viewed=0\|1  
+  * Output: none  
 
 * DELETE /accounts/{accountID}/messages/{messageID}  
-    * Deletes a message  
-    * Input:  none  
-    * Output: none  
+  * Deletes a message  
+  * Input:  none  
+  * Output: none  
   
   ---- Original API here for comparison Remove when the refactored api is live ----
 
