@@ -78,7 +78,7 @@ There are 3 regions separated by boundaries.
     * Where FolderInfo:= {FolderName, Idx, NumTotal, NumUnviewed} 
 
 * GET /accounts/{accountID}/folders/{folderID}  
-  * Returns the messages in a folder sorted/limited/paged for the frontend. Page size is specified by limit. So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10. 
+  * Returns the messages in a folder sorted/limited/paged for the frontend. limit and page work to specify a window of messages to retrieve. Page size is specified by limit. So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10. The Messages[] array may be fewer than limit (or even empty) if the span set by Page,Limit exceeds the number of actual messages. Front end can use FolderInfo.NumTotal to control the request. 
   * Input:  
     * ?[limit=n]  
     * &[page=n]  
