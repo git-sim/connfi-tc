@@ -61,10 +61,10 @@ There are 3 regions separated by boundaries.
   * Output: {ID, email, firstname, lastname}   
 
 * PUT /accounts/{accountID}   
-  * Replaces the account info   
+  * Updates the account info   
   * Input: AccountInfo {email,firstname,lastname}   
   * Output: none
-  
+
 * DELETE /accounts/{accountID} 
   * Delete account 
   * Input: none
@@ -83,8 +83,8 @@ There are 3 regions separated by boundaries.
   * Input:  
     * ?[limit=n]  
     * &[page=n]  
-    * &[sortorder=-1 \| 1]  
-    * &[sort= time\|sender\|subject]  
+    * &[sortorder=**-1**\|1]  
+    * &[sort=**time**\|sender\|subject]  
   * Output: {HeaderInfo, Messages[]}  
     * Where HeaderInfo is {{InputQueryParams}, FolderInfo} 
 
@@ -117,6 +117,56 @@ There are 3 regions separated by boundaries.
   * Deletes a message  
   * Input:  none  
   * Output: none  
+
+#### threads: Used for displaying messages as threads. Possibly move to under folders.
+* GET /accounts/{accountID}/threads    
+  * Returns list of threadInfos for the account    
+  * Input: limit and offset are optional, means all if omitted  
+    * ?[limit=n]  
+    * &[offset=n]  
+  * Output: {TotalNumberOfThreads, numRet, ThreadInfo[]}  
+    * where ThreadInfo := {IsMuted, NumTotalMsgsInThread, NumUnvieiwedMsgsInThread, MessageID[]}   
+
+* GET /accounts/{accountID}/threads/{threadID}    
+  * Returns info for a particular thread  
+  * Input: none   
+  * Output: {ThreadInfo}  (see above)  
+
+* PUT /accounts/{accountID}/threads/{threadID}    
+  * Sets the mute param for the thread   
+  * Input: mute=0|1    
+  * Output: none   
+
+* DELETE /accounts/{accountID}/threads/{threadID}  
+  * Deletes all the messages in the thread   
+ 
+#### profile: Get/Set the profile for a user.  Broken out by fields to encourage use of the individual requrests. Since the profile may get data/added removed keeps the API the the least coupled if clients ask for the profile fields by name instead of the whole profile. 
+
+* GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url
+  * Returns the entire profile  
+  * Input: none
+  * Output: {Profile} 
+    * where Profile:= {ID, name, bio, avatarImg, bgImg }
+
+* GET /account/{accountID}/profile/name  
+  * Returns name string  
+  * Input: none  
+  * Output: {name}  
+
+* GET /account/{accountID}/profile/bio
+  * Returns bio string  
+  * Input: none  
+  * Output: {bio}  
+
+* GET /account/{accountID}/profile/avatar
+  * Returns avatar image as a .png 
+  * Input: none  
+  * Output: {avatar}  
+
+* GET /account/{accountID}/profile/bg
+  * Returns background image as a .png 
+  * Input: none  
+  * Output: {bg}  
   
   ---- Original API here for comparison Remove when the refactored api is live ----
 
