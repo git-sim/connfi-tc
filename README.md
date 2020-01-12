@@ -41,143 +41,141 @@ There are 3 regions separated by boundaries.
 
 ### REST API
 
-#### accounts: Information about user accounts. Contains id, email, firstname, lastname  
-* POST /accounts
-  * Registers a New Account in the system   
-  * Input: Account as body param   
-    * {email,firstname,lastname}   
-  * Output: Returns id of the newly created account if email was unique   
+#### accounts: Information about user accounts. Contains id, email, firstname, lastname
+<ul><li>POST /accounts</li>
+  <ul><li> Registers a New Account in the system   </li>
+      <li> Input: Account as body param   </li>
+      <ul><li> {email,firstname,lastname}   </li></ul>
+      <li> Output: Returns {accid, email, firstname ,lastname} if the email was existent and unique. </li></ul></ul>
 
-* GET /accounts
-  * Get the list of accounts.  
-  * Input:  limit and offset are optional. If not specified means all accounts.   
-    * ?[limit=n]  
-    * &[offset=n]  
-  * Output: {TotalNumOfAccounts, Accounts[]}  
+<ul><li>GET /accounts</li>
+  <ul><li> Get the list of accounts.  </li>
+      <li> Input: none </li>
+      <li> Output: {Accounts[]}  </li></ul></ul>
 
-* GET /accounts/{accountID}
-  * Returns specific account info.  
-  * Input: none  
-  * Output: {ID, email, firstname, lastname}   
+<ul><li>GET /accounts/{accountID}</li>
+  <ul><li> Returns specific account info.  </li>
+      <li> Input: none  </li>
+      <li> Output: {accid, email, firstname, lastname}   </li></ul></ul>
 
-* PUT /accounts/{accountID}
-  * Updates the account info   
-  * Input: AccountInfo {email,firstname,lastname}   
-  * Output: none
+<ul><li>PUT /accounts/{accountID}</li>
+  <ul><li> Updates the account info   </li>
+      <li> Input: N{firstname, lastname} id and email are ignored   </li>
+      <li> Output: none</li></ul></ul>
 
-* DELETE /accounts/{accountID}
-  * Delete account 
-  * Input: none
-  * Output: none
+<ul><li>DELETE /accounts/{accountID}</li>
+  <ul><li> Delete account </li>
+      <li> Input: none</li>
+      <li> Output: none</li></ul></ul>
 
 #### folders: Contains summary info about user folders (inbox, archive, etc). A particular folder can be queried for all the messages in the folder, with sorting. 
-* GET /accounts/{accountID}/folders
-  * Returns list of folders  
-  * Input: none  
-  * Output: {TotalNumberOfFolders, FolderInfo[]}  
-    * Where FolderInfo:= {FolderName, Idx, NumTotal, NumUnviewed} 
+<ul><li> GET /accounts/{accountID}/folders</li>
+  <ul><li> Returns list of folders  </li>
+      <li> Input: none  </li>
+      <li> Output: {FolderInfo[]}  </li>
+      <ul><li> where FolderInfo:= {FolderName, Idx, NumTotal, NumUnviewed} </li></ul></ul></ul>
 
-* GET /accounts/{accountID}/folders/{folderID}  
-  * Returns the messages in a folder sorted/limited/paged for the frontend. limit and page work to specify a window of messages to retrieve. Page size is specified by limit. So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10. The Messages[] array may be fewer than limit (or even empty) if the span set by Page,Limit exceeds the number of actual messages. Front end can use FolderInfo.NumTotal to control the request. 
-  * Input:  
-    * ?[limit=n]  
-    * &[page=n]  
-    * &[sortorder=**-1**\|1]  
-    * &[sort=**time**\|sender\|subject]  
-  * Output: {HeaderInfo, Messages[]}  
-    * Where HeaderInfo is {{InputQueryParams}, FolderInfo} 
+<ul><li> GET /accounts/{accountID}/folders/{folderID}  </li>
+  <ul><li> Returns the messages in a folder sorted/limited/paged for the frontend. limit and page work to specify a window of messages to retrieve. Page size is specified by limit. So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10. The Messages[] array may be fewer than limit (or even empty) if the span set by Page,Limit exceeds the number of actual messages. Front end can use FolderInfo.NumTotal to control the request. </li>
+      <li> Input:  </li>
+      <ul><li> ?[limit=n]  </li>
+          <li> &[page=n]  </li>
+          <li> &[sortorder=<strong>-1</strong>|1]  </li>
+          <li> &[sort=<strong>time</strong>|sender|subject]  </li></ul>
+      <li> Output: {HeaderInfo, Messages[]}  </li>
+        <ul><li> where HeaderInfo is {{InputQueryParams}, FolderInfo} </li></ul></ul></ul>
 
 #### messages: Access to messages for a particular user regardless of what folder they are in. Mainly used for creating, deleting, and marking messages as read. Retrieval/Display of messages is best done via the 'account/{accountID}/folders/{folderID}' endpoint. 
 
-* POST /accounts/{accountID}/messages  
-  * Creates a new message  
-  * Input:  message as body param  
-  * Output: Returns message id of created message  
+<ul><li> POST /accounts/{accountID}/messages  </li>
+  <ul><li> Creates a new message  </li>
+      <li> Input:  message as body param  </li>
+      <li> Output: Returns message id of created message  </li></ul></ul>
 
-* GET /accounts/{accountID}/messages  
-  * List of messages limit and offset are optional. If not specified means all messages.    
-  * Input:  
-    * [?limit=n&offset=n]  
-  * Output: Returns the total number of messages, and a list of messages(limit,offset)  
-            {TotalNumberOfMessages,  Messages[]}  
+<ul><li> GET /accounts/{accountID}/messages  </li>
+  <ul><li> List of messages limit and offset are optional. If not specified means all messages.    </li>
+      <li> Input:  </li>
+      <ul><li> [?limit=n&offset=n]  </li></ul>
+      <li> Output: Returns the total number of messages, and a list of messages(limit,offset)  </li>
+          <ul>{TotalNumberOfMessages,  Messages[]}  </li></ul></ul></ul>
 
-* GET /accounts/{accountID}/messages/{messageID}  
-  * Returns a specific message  
-  * Input:  none  
-  * Output: {Message}  
+<ul><li> GET /accounts/{accountID}/messages/{messageID}  </li>
+  <ul><li> Returns a specific message  </li>
+      <li> Input:  none  </li>
+      <li> Output: {Message}  </li></ul></ul>
 
-* PUT /accounts/{accountID}/messages/{messageID}  
-  * Modify a message in a folder to mark it as viewed.  
-  * Input:  viewed=0\|1  
-  * Output: none  
+<ul><li> PUT /accounts/{accountID}/messages/{messageID}  </li>
+  <ul><li> Modify a message in a folder to mark it as viewed.  </li>
+      <li> Input:  viewed=0|1</li>  
+      <li> Output: none  </li></ul></ul>
 
-* DELETE /accounts/{accountID}/messages/{messageID}  
-  * Deletes a message  
-  * Input:  none  
-  * Output: none  
+<ul><li> DELETE /accounts/{accountID}/messages/{messageID}  </li>
+  <ul><li> Deletes a message  </li>
+      <li> Input:  none  </li>
+      <li> Output: none  </li></ul></ul>
 
 #### threads: Used for displaying messages as threads. Possibly move to under folders.
-* GET /accounts/{accountID}/threads
-  * Returns list of threadInfos for the account    
-  * Input: limit and offset are optional, means all if omitted  
-    * [?limit=n&offset=n]  
-  * Output: {TotalNumberOfThreads, numRet, ThreadInfo[]}  
-    * where ThreadInfo := {IsMuted, NumTotalMsgsInThread, NumUnvieiwedMsgsInThread, MessageID[]}   
-* GET /accounts/{accountID}/threads/{threadID}
-  * Returns info for a particular thread  
-  * Input: none   
-  * Output: {ThreadInfo}  (see above)  
-* PUT /accounts/{accountID}/threads/{threadID} 
-  * Sets the mute param for the thread   
-  * Input: mute=0|1    
-  * Output: none   
-* DELETE /accounts/{accountID}/threads/{threadID}
-  * Deletes all the messages in the thread   
+<ul><li> GET /accounts/{accountID}/threads</li>
+  <ul><li> Returns list of threadInfos for the account    </li>
+      <li> Input: limit and offset are optional, means all if omitted  </li>
+      <ul><li> [?limit=n&offset=n]  </li></ul>
+      <li> Output: {TotalNumberOfThreads, numRet, ThreadInfo[]}  </li>
+      <ul><li> where ThreadInfo := {IsMuted, NumTotalMsgsInThread, NumUnvieiwedMsgsInThread, MessageID[]}  </li></ul></ul></ul> 
+<ul><li> GET /accounts/{accountID}/threads/{threadID}</li>
+  <ul><li> Returns info for a particular thread  </li>
+      <li> Input: none   </li>
+      <li> Output: {ThreadInfo}  (see above)  </li></ul></ul>
+<ul><li> PUT /accounts/{accountID}/threads/{threadID} </li>
+  <ul><li> Sets the mute param for the thread   </li>
+      <li> Input: mute=0|1    </li>
+      <li> Output: none   </li></ul></ul>
+<ul><li> DELETE /accounts/{accountID}/threads/{threadID}</li>
+    <ul><li> Deletes all the messages in the thread   </li></ul></ul>
  
 #### profile: Get/Set the profile for a user.  Broken out by fields to encourage use of the individual requrests. Since the profile may get data/added removed keeps the API the the least coupled if clients ask for the profile fields by name instead of the whole profile. 
-* GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  
-  * Returns the entire profile  
-  * Input: none  
-  * Output: {Profile}  
-    * where Profile:= {ID, name, bio, avatarImg, bgImg }  
-* GET /account/{accountID}/profile/name  
-  * Returns name string  
-  * Input: none  
-  * Output: {name}  
-* GET /account/{accountID}/profile/bio  
-  * Returns bio string  
-  * Input: none  
-  * Output: {bio}  
-* GET /account/{accountID}/profile/avatar  
-  * Returns avatar image as a .png  
-  * Input: none  
-  * Output: {avatar}  
-* GET /account/{accountID}/profile/bg  
-  * Returns background image as a .png  
-  * Input: none  
-  * Output: {bg}  
+<ul><li> GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  </li>
+  <ul><li> Returns the entire profile  </li>
+      <li> Input: none  </li>
+      <li> Output: {Profile}  </li>
+      <ul><li> where Profile:= {ID, name, bio, avatarImg, bgImg }  </li></ul></ul></ul>
+<ul><li> GET /account/{accountID}/profile/name  </li>
+  <ul><li> Returns name string  </li>
+      <li> Input: none  </li>
+      <li> Output: {name}  </li></ul></ul>
+<ul><li> GET /account/{accountID}/profile/bio  </li>
+  <ul><li> Returns bio string  </li>  
+      <li> Input: none  </li>
+      <li> Output: {bio}  </li></ul></ul>
+<ul><li> GET /account/{accountID}/profile/avatar  </li>
+  <ul><li> Returns avatar image as a .png  </li>
+      <li> Input: none  </li>
+      <li> Output: {avatar}  </li></ul></ul>
+<ul><li> GET /account/{accountID}/profile/bg  </li>
+  <ul><li> Returns background image as a .png  </li>
+      <li> Input: none  </li>
+      <li> Output: {bg}  </li></ul></ul>
 PUT's should be symmetric to the gets above 
-* PUT /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  
-  * Sets the entire profile    
-  * Input: {Profile}  
-    * where Profile:= {ID, name, bio, avatarImg, bgImg }  
-  * Output:  none  
-* PUT /account/{accountID}/profile/name   
-  * Sets name string  
-  * Input: {name}  
-  * Output: none   
-* PUT /account/{accountID}/profile/bio  
-  * Sets bio string  
-  * Input: {bio}  
-  * Output: none  
-* PUT /account/{accountID}/profile/avatar  
-  * Sets avatar image as a .png  
-  * Input: none  
-  * Output: {avatar}  
-* PUT /account/{accountID}/profile/bg  
-  * Sets background image as a .png  
-  * Input: {bg}    
-  * Output: none  
+<ul><li> PUT /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  </li>
+  <ul><li> Sets the entire profile  </li>    
+      <li> Input: {Profile}  </li>
+      <ul><li> where Profile:= {ID, name, bio, avatarImg, bgImg }  </li></ul>
+      <li> Output:  none  </li></ul></ul>
+<ul><li> PUT /account/{accountID}/profile/name   </li>
+  <ul><li> Sets name string  </li>
+      <li> Input: {name}  </li>
+      <li> Output: none   </li></ul></ul>
+<ul><li> PUT /account/{accountID}/profile/bio  </li>
+  <ul><li> Sets bio string  </li>
+      <li> Input: {bio}  </li>
+      <li> Output: none  </li></ul></ul>
+<ul><li> PUT /account/{accountID}/profile/avatar  </li>
+  <ul><li> Sets avatar image as a .png  </li>
+      <li> Input: none  </li>
+      <li> Output: {avatar}  </li></ul></ul>
+<ul><li> PUT /account/{accountID}/profile/bg  </li>
+  <ul><li> Sets background image as a .png  </li>
+      <li> Input: {bg}    </li>
+      <li> Output: none  </li></ul></ul>
 
   ---- Original API here for comparison Remove when the refactored api is live ----
 

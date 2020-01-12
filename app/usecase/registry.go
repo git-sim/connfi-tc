@@ -10,7 +10,7 @@ import (
 
 // InitAccounts ...
 func InitAccounts(accUsecase AccountUsecase) error {
-	_, err := accUsecase.RegisterAccount("admin@localhost")
+	_, err := accUsecase.RegisterAccountByEmail("admin@localhost")
 	return err
 }
 

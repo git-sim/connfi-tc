@@ -10,8 +10,9 @@ import (
 
 // AccountService struct
 type AccountService struct {
-	repo                  repo.AccountRepo
-	regAccountSubscribers []func(entity.Account)
+	repo                        repo.AccountRepo
+	regNewAccountSubscribers    []func(entity.Account)
+	regDeleteAccountSubscribers []func(entity.Account)
 }
 
 // NewAccountService takes in the account repository
@@ -23,7 +24,7 @@ func NewAccountService(newrepo repo.AccountRepo) *AccountService {
 
 // AlreadyExists returns if the account exists
 func (s *AccountService) AlreadyExists(email string) bool {
-	_, err := s.repo.Retrieve(email)
+	_, err := s.repo.RetrieveByEmail(email)
 	if err == nil {
 		return true
 	}
@@ -41,7 +42,7 @@ func (s *AccountService) AlreadyExistsByID(id entity.AccountIDType) bool {
 
 // GetIDFromEmail utility reverse lookup
 func (s *AccountService) GetIDFromEmail(email string) (entity.AccountIDType, error) {
-	val, err := s.repo.Retrieve(email) //todo replace with the promised quick mapping
+	val, err := s.repo.RetrieveByEmail(email) //todo replace with the promised quick mapping
 	if err == nil {
 		return val.GetID(), nil
 	}
@@ -51,12 +52,24 @@ func (s *AccountService) GetIDFromEmail(email string) (entity.AccountIDType, err
 // todo put a real notification system in
 // SubscribeRegisterAccount Simple pub-sub notification, need to generalize into a class, and add locking
 func (s *AccountService) SubscribeRegisterAccount(fn func(entity.Account)) {
-	s.regAccountSubscribers = append(s.regAccountSubscribers, fn)
+	s.regNewAccountSubscribers = append(s.regNewAccountSubscribers, fn)
 }
 
 // NotifyRegisterAccount an new account has been created, notify interested parties so they can take action
 func (s *AccountService) NotifyRegisterAccount(acc entity.Account) {
-	for _, fn := range s.regAccountSubscribers {
+	for _, fn := range s.regNewAccountSubscribers {
+		fn(acc)
+	}
+}
+
+// SubscribeDeleteAccount Simple pub-sub notification, need to generalize into a class, and add locking
+func (s *AccountService) SubscribeDeleteAccount(fn func(entity.Account)) {
+	s.regDeleteAccountSubscribers = append(s.regDeleteAccountSubscribers, fn)
+}
+
+// NotifyDeleteAccount an account has been deleted, notify interested parties so they can take action
+func (s *AccountService) NotifyDeleteAccount(acc entity.Account) {
+	for _, fn := range s.regDeleteAccountSubscribers {
 		fn(acc)
 	}
 }

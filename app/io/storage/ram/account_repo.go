@@ -87,7 +87,7 @@ func (r *accountRepo) Delete(a *entity.Account) error {
 	return nil
 }
 
-func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
+func (r *accountRepo) RetrieveByEmail(email string) (*entity.Account, error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 

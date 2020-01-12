@@ -98,7 +98,7 @@ func parseAndGetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string,
 
 func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r, w)
+		setupCORS(w, r)
 		r.ParseForm()
 		email := r.FormValue("email")
 		if email == "" {
@@ -106,7 +106,7 @@ func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler
 			return
 		}
 
-		account, err := accu.GetAccount(email)
+		account, err := accu.GetAccountByEmail(email)
 		if err != nil {
 			http.Error(w, "email not found", http.StatusBadRequest)
 			return
@@ -157,7 +157,7 @@ func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler
 
 func HandleProfileList(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r, w)
+		setupCORS(w, r)
 		switch r.Method {
 		case http.MethodGet:
 			accs, err := accu.GetAccountList()

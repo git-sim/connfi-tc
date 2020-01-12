@@ -11,8 +11,8 @@ import (
 // HandleMessage handler - Allows POSTing messages to the system, and reading a message given an id
 func HandleMessage(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r, w)
-		accIDString, ok, auth := GetAccIDFromSession(u, r)
+		setupCORS(w, r)
+		accIDString, ok, auth := getAccIDFromSession(u, r)
 		if !auth || !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return

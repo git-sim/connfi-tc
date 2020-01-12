@@ -8,6 +8,7 @@ WORKDIR /go/src/github.com/git-sim/tc/app
 ADD . .
 # Build the go-API-template command inside the container
 RUN apk add --no-cache git 
+RUN go get -u github.com/go-chi/chi
 RUN go get github.com/gorilla/sessions
 RUN go get github.com/gorilla/websocket
 RUN apk del git

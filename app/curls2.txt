@@ -1,0 +1,157 @@
+# Refactored API test accounts
+# Accounts
+#  POSTs  NOTE on windows have to escape the quote with \"
+curl -v -X POST -d "{\"email\":\"alice.smith@mail.com\"}" -H "Content-Type: application/json" localhost:8080/accounts
+curl -v -X POST -d "{\"email\":\"bob.smith@mail.com\"}" -H "Content-Type: application/json" localhost:8080/accounts
+curl -v -X POST -d "{\"email\":\"charlie.smith@mail.com\",\"firstname\":\"Charles\",\"lastname\":\"Smythe\"}" -H "Content-Type: application/json" localhost:8080/accounts
+
+# Get Accountlist
+curl -v localhost:8080/accounts
+
+# Get Specific Account (admin account in this case)
+curl -v localhost:8080/accounts/a634a4b5c1d416d1
+curl -v localhost:8080/accounts/d9496f0466824fee
+
+# Update a name
+curl -v -X PUT -d "{\"accid\":\"d9496f0466824fee\",\"email\":\"alice.smith@mail.com\",\"firstname\":\"Alice\",\"lastname\":\"Smith\"}" -H "Content-Type: application/json" localhost:8080/accounts/d9496f0466824fee
+curl -v -X PUT -d "{\"firstname\":\"Alice\",\"lastname\":\"Smith\"}" -H "Content-Type: application/json" localhost:8080/accounts/d9496f0466824fee
+
+
+
+=== ORIGINAL API ===
+# Set a value
+curl -v -b testcookiefile.txt -c testcookiefile.txt -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+curl -v -b testcookiefile.txt -c testcookiefile.txt -XPUT -d firstname="Bob" -d lastname="Smith" localhost:8080/account?email=bob.smith@mail.com
+
+# Get a value
+curl -v -XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/account?email=alice.smith@mail.com 
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/account?email=bob.smith@mail.com 
+
+# Get using a body param for the email
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt -T "@testbody.json" -H "Content-Type: application/json" localhost:8080/account?email=alice.smith@mail.com 
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt -d "@testbody.json" -H "Content-Type: application/json" localhost:8080/account
+
+
+# Create 
+curl -v -b testcookiefile.txt -c testcookiefile.txt -XPOST localhost:8080/account?email=alice.smith@mail.com
+#    The email appears in both the query string and the form body seems formvalue is the way to go.
+curl -v -XPOST -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+
+
+====
+#    Below works but remember, the email won't be part of the query. 
+#    It will be a form param. Ordering is not guaranteed the -H "Content-type is optional...
+curl -v -b testcookiefile.txt -c testcookiefile.txt -XPOST -d "email=Alice5@mail.com&firstname=Alice&lastname=Smith" -H "Content-Type: application/x-www-form-urlencoded" localhost:8080/profile
+
+# Delete
+curl -v -b testcookiefile.txt -c testcookiefile.txt -XDELETE localhost:8080/account?email=alice.smith@mail.com
+
+====
+Login
+curl -v -XPOST -b testcookiefile.txt -c testcookiefile.txt localhost:8080/login?email=bob.smith@mail.com
+curl -v -XPOST -b testcookiefile.txt -c testcookiefile.txt localhost:8080/login?email=alice.smith@mail.com
+
+==== 
+Message
+# Try to get message 0 should always fail
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/message?msgid=0
+
+# Create a new message
+curl -v --cookie testcookiefile.txt -d "@testmsg.json" -H "Content-Type: application/json" -X POST http://localhost:8080/message
+
+# Try to get the message
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/message?msgid=1
+
+===
+Folder  Bob's inbox, or Alice's sentmail
+curl -v -XPOST -b testcookiefile.txt -c testcookiefile.txt localhost:8080/login?email=bob.smith@mail.com
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt -d "sortorder"="-1" -d "sort=1" -d "page"="0" localhost:8080/folder
+
+curl -v -XPOST -b testcookiefile.txt -c testcookiefile.txt localhost:8080/login?email=alice.smith@mail.com
+curl -v -GET -b testcookiefile.txt -c testcookiefile.txt localhost:8080/folder?folderid=2
+
+====
+ACCOUNT:NEW <email>
+curl -v -XPOST localhost:8080/account?email=alice.smith@mail.com
+
+ACCOUNT:DELETE <email|Id>
+curl -v -XDELETE localhost:8080/account?email=alice.smith@mail.com
+curl -v -XDELETE localhost:8080/account?id="abcdefg..."
+  Can return OK, or NotFound, error
+
+ACCOUNT <email>,[field1="<s1>",field2="s2",...]
+curl -v -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?email=alice.smith@mail.com
+curl -v -XPUT -d firstname="Alice" -d lastname="Smith" localhost:8080/account?id="abcdefg"
+  Can return 
+	email|id: ok, or NotFound, error
+  	field*: FieldNotfound, InvalidInput [message saying which field]
+
+ACCOUNT? <email|id>,[field1,field2...]
+curl -v XGET -d firstname localhost:8080/account?email=alice.smith@mail.com 
+curl -v XGET -d firstname localhost:8080/account?id="abcdefg"
+  Can return 
+	email|id: ok, or NotFound, error
+  	field*: FieldNotfound [message saying which field]
+
+
+ACCOUNT:CAT?
+  Can return 
+    error
+
+ACCOUNT:SEARCH? <field>,<pattern>
+curl -v XGET -d pattern="ali" localhost:8080/account/search?field="firstname"
+  Can return 
+    error
+    field*: FieldNotfound [message saying which field]
+
+
+====
+//Styles
+
+//Create
+ACCOUNT:NEW <email>
+  POST email="<email>"
+
+//Delete
+ACCOUNT:DELETE <email|id>
+  DELETE email="<email string>"|id="<id string>"
+
+// Update/Put
+ACCOUNT <email|id>,[field1="<s1>",field2="s2",...]
+  PUT email="<email>"|id="<id string>"
+    -d field1="<s1 string>" 
+    -d field2="<s2 string>" ...
+
+  ACCOUNT:FIRSTNAME <email|Id>,<name string>
+  ACCOUNT:LASTNAME <email|Id>,<name string>
+  ACCOUNT:AVATAR <email|Id>,<#binblock image>
+
+// Get
+ACCOUNT? <email|id>,[field1,field...]
+  GET email="<email>"|id="<id string>"
+  -d field1
+  -d field2
+
+  ACCOUNT:FIRSTNAME? <email|Id>
+  ACCOUNT:LASTNAME? <email|Id>
+  <lastname: string
+  ACCOUNT:AVATAR? <email|Id> 
+  <#binblock image
+
+// Get List Get ALL
+ACCOUNT:CAT? 
+<{firstname: string>,<lastname: string>,<id: string>,<avatar: image>},{}
+
+// Get List Search
+ACCOUNT:SEARCH? field1="<s1>"
+<[]string
+    ACCOUNT:CAT:FIRSTNAME?
+    ACCOUNT:CAT:LASTNAME?
+    ACCOUNT:CAT:EMAIL?
+
+ACCOUNT:TYPES? <email|id>,[field1,field...]
+<string, string, string, int64, image[]>
+
+<string, string, string, int64, image[]>
+

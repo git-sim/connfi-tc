@@ -18,8 +18,8 @@ import (
 // HandleFolder handler
 func HandleFolder(ufo usecase.FoldersUsecase, mu usecase.MsgUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r, w)
-		accIDString, ok, auth := GetAccIDFromSession(u, r)
+		setupCORS(w, r)
+		accIDString, ok, auth := getAccIDFromSession(u, r)
 		if !auth || !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return

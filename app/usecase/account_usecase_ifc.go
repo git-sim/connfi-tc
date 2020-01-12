@@ -9,11 +9,18 @@ import (
 
 // AccountUsecase interface for account management
 type AccountUsecase interface {
+	RegisterAccount(account *Account) (*Account, error)
+	RegisterAccountByEmail(email string) (*Account, error)
 	GetAccountList() ([]*Account, error)
-	GetAccount(email string) (*Account, error)
-	RegisterAccount(email string) (*Account, error)
+	GetAccount(id string) (*Account, error)
+	GetAccountByEmail(email string) (*Account, error)
+	UpdateAccount(account *Account) error
+	DeleteAccount(id string) error
+
+	// deprecated
 	UpdateNameAccount(email string, firstname *string, lastname *string) error
-	DeleteAccount(email string) error
+	DeleteAccountByEmail(email string) error
+	// /deprecated
 
 	GetSession() SessionUsecase
 	IsRegisteredID(id string) bool
@@ -22,10 +29,10 @@ type AccountUsecase interface {
 // An Account type for tranferring across the Usecase boundary
 // provides isolation from details of entity.Account
 type Account struct {
-	ID        string
-	Email     string
-	FirstName string
-	LastName  string
+	ID        string `json:"accid,omitempty"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
 }
 
 type AccountIDType entity.AccountIDType

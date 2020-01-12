@@ -9,7 +9,7 @@ type AccountRepo interface {
 	Update(a *entity.Account) error
 	Delete(a *entity.Account) error
 
-	Retrieve(email string) (*entity.Account, error)
+	RetrieveByEmail(email string) (*entity.Account, error)
 	RetrieveByID(id entity.AccountIDType) (*entity.Account, error)
 	RetrieveCount() (int, error)
 	RetrieveAll() ([]*entity.Account, error)

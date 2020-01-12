@@ -23,7 +23,7 @@ func exampleSessionID(us usecase.SessionUsecase, r *http.Request, w http.Respons
 // HandleLogin - handles logging in or registering a new account
 func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r,w)
+		setupCORS(w, r)
 		switch r.Method {
 		case http.MethodPost:
 			r.ParseForm()
@@ -35,12 +35,12 @@ func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handl
 
 			session, _ := us.FromReq(r)
 
-			acc, err := u.GetAccount(email)
+			acc, err := u.GetAccountByEmail(email)
 			if err != nil {
 				es, ok := err.(*usecase.ErrStat)
 				if ok && es.Code == usecase.EsNotFound {
 					// Doesn't exist create new account
-					acc, err = u.RegisterAccount(email)
+					acc, err = u.RegisterAccountByEmail(email)
 					if err != nil {
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						fmt.Fprintf(w, "err: %s\n", err.Error())
@@ -73,7 +73,7 @@ func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handl
 // HandleLogout clears out the session id
 func HandleLogout(us usecase.SessionUsecase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		SetupCORS(r,w)
+		setupCORS(w, r)
 		r.ParseForm()
 		session, _ := us.FromReq(r)
 

@@ -28,13 +28,22 @@ func (r *accountRepo) Delete(a *entity.Account) error {
 	return nil
 }
 
-func (r *accountRepo) Retrieve(email string) (*entity.Account, error) {
+func (r *accountRepo) RetrieveByEmail(email string) (*entity.Account, error) {
 	a, ok := r.m[email]
 	if ok {
 		return a, nil
 	} else {
 		return nil, fmt.Errorf("email not found")
 	}
+}
+
+func (r *accountRepo) RetrieveByID(id entity.AccountIDType) (*entity.Account, error) {
+	for _, a := range r.m {
+		if a.GetID() == id {
+			return a, nil
+		}
+	}
+	return nil, fmt.Errorf("id not found")
 }
 
 func (r *accountRepo) RetrieveCount() (int, error) {
