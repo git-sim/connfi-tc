@@ -142,32 +142,59 @@ There are 3 regions separated by boundaries.
  
 #### profile: Get/Set the profile for a user.  Broken out by fields to encourage use of the individual requrests. Since the profile may get data/added removed keeps the API the the least coupled if clients ask for the profile fields by name instead of the whole profile. 
 
-* GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url
+* GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  
   * Returns the entire profile  
-  * Input: none
-  * Output: {Profile} 
-    * where Profile:= {ID, name, bio, avatarImg, bgImg }
+  * Input: none  
+  * Output: {Profile}  
+    * where Profile:= {ID, name, bio, avatarImg, bgImg }  
 
 * GET /account/{accountID}/profile/name  
   * Returns name string  
   * Input: none  
   * Output: {name}  
 
-* GET /account/{accountID}/profile/bio
+* GET /account/{accountID}/profile/bio  
   * Returns bio string  
   * Input: none  
   * Output: {bio}  
 
-* GET /account/{accountID}/profile/avatar
-  * Returns avatar image as a .png 
+* GET /account/{accountID}/profile/avatar  
+  * Returns avatar image as a .png  
   * Input: none  
   * Output: {avatar}  
 
-* GET /account/{accountID}/profile/bg
-  * Returns background image as a .png 
+* GET /account/{accountID}/profile/bg  
+  * Returns background image as a .png  
   * Input: none  
   * Output: {bg}  
   
+PUT's should be symmetric to the gets above 
+* PUT /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  
+  * Sets the entire profile    
+  * Input: {Profile}  
+    * where Profile:= {ID, name, bio, avatarImg, bgImg }  
+  * Output:  none  
+
+* PUT /account/{accountID}/profile/name   
+  * Sets name string  
+  * Input: {name}  
+  * Output: none   
+
+* PUT /account/{accountID}/profile/bio  
+  * Sets bio string  
+  * Input: {bio}  
+  * Output: none  
+
+* PUT /account/{accountID}/profile/avatar  
+  * Sets avatar image as a .png  
+  * Input: none  
+  * Output: {avatar}  
+
+* PUT /account/{accountID}/profile/bg  
+  * Sets background image as a .png  
+  * Input: {bg}    
+  * Output: none  
+
   ---- Original API here for comparison Remove when the refactored api is live ----
 
     * The endpoints are 
