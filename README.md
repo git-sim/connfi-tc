@@ -66,8 +66,9 @@ There are 3 regions separated by boundaries.
 
 * GET /accounts/{accountID}/messages  
     * List of messages limit and offset are optional. If not specified means all messages.    
-    * Input:  ?[limit=n]  
-            &[offset=n]  
+    * Input:  
+      * ?[limit=n]
+      * &[offset=n]  
     * Output: Returns the total number of messages, and a list of messages(limit,offset)  
             {TotalNumberOfMessages,  Messages[]}  
 
