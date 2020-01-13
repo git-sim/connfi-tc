@@ -97,6 +97,36 @@ func (f *foldersUsecase) AddToFolder(folderEnum int, id AccountIDType, msg MsgEn
 	return err
 }
 
+// Add a message to a user's folder
+func (f *foldersUsecase) UpdateMsg(id AccountIDType, mid MsgIDType, msg MsgEntry) error {
+	acckey := repo.GenericKeyT(id)
+	val, err := f.dbFolders.Retrieve(acckey)
+	if err != nil {
+		return err
+	}
+	folders := val.([EnumNumFolders]repo.Generic)
+	msgkey := repo.GenericKeyT(mid)
+
+	enmsg := entity.MsgEntry(msg) //Entity messages go in to the repos
+	//Convert to the desired type in folder (unnecessary complexity?)
+	// reverted to switches, need to figure out how to switch on ElemT
+	folderEnum := FolderEnum(msg.Folder)
+	switch folderEnum {
+	case EnumInbox:
+		err = folders[folderEnum].Update(msgkey, enmsg)
+	case EnumArchive:
+		err = folders[folderEnum].Update(msgkey, enmsg)
+	case EnumSent:
+		err = folders[folderEnum].Update(msgkey, enmsg.M)
+	case EnumScheduled:
+		err = folders[folderEnum].Update(msgkey, enmsg.M)
+	default:
+		err = NewEs(EsInternalError, "Unknown msg type for folder")
+	}
+	//
+	return err
+}
+
 func (f *foldersUsecase) ArchiveMsg(id AccountIDType, mid MsgIDType) error {
 	return f.moveBetweenFolders(EnumInbox, EnumArchive, id, mid)
 }
@@ -295,4 +325,74 @@ func (f *foldersUsecase) QueryMsgs(id AccountIDType, qp QueryParams) (*MsgQueryO
 	}
 
 	return pOut, nil
+}
+
+func (f *foldersUsecase) GetOneMsg(aID AccountIDType, mID MsgIDType) (*MsgEntry, error) {
+	acckey := repo.GenericKeyT(aID)
+	val, err := f.dbFolders.Retrieve(acckey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Scan the folders for the message
+	found := false
+	folders := val.([EnumNumFolders]repo.Generic)
+	folderIdx := 0
+	var msg interface{}
+	for idx, folder := range folders {
+		msg, err = folder.Retrieve(repo.GenericKeyT(mID))
+		if err != nil {
+			continue
+		}
+		folderIdx = idx
+		found = true
+	}
+
+	if !found {
+		return nil, NewEs(EsNotFound,
+			fmt.Sprintf("AccountID: %d MessageID %d", aID, mID))
+	}
+
+	// The folder is a table/collection in the storage repo/database.
+	// todo Take advantage of the query capabilities in repositories.
+	// For now since the data is opaque to the db, we pull it and give it form here
+	// Also need to refactor this to put the type switching/dispatch in one call or interface
+	var output MsgEntry
+	switch folderIdx {
+	case EnumSent:
+		fallthrough
+	case EnumScheduled:
+		// Sent & Scheduled contains type entity.Msg
+		val2, _ := msg.(entity.Msg)
+		output = MsgEntry(*entity.NewMsgEntry(val2))
+
+	default:
+		// Inbox,Archive and all user folders contain entity.MsgEntry
+		val2, _ := msg.(entity.MsgEntry)
+		output = MsgEntry(val2)
+	}
+	return &output, nil
+}
+
+// GetFolderInfo returns folder info such as the idx, name, counts of items.
+func (f *foldersUsecase) GetFolderInfo(id AccountIDType) ([]FolderInfoOutput, error) {
+	acckey := repo.GenericKeyT(id)
+	val, err := f.dbFolders.Retrieve(acckey)
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([]FolderInfoOutput, 0, EnumNumFolders)
+	folders := val.([EnumNumFolders]repo.Generic)
+	for idx, folder := range folders {
+		var fio FolderInfoOutput
+		fio.FolderIdx = idx
+		fio.FolderName = FolderText(idx)
+		fio.NumTotal, err = folder.RetrieveCount()
+		if err != nil {
+			fio.NumTotal = 0
+		}
+		output = append(output, fio)
+	}
+	return output, nil
 }

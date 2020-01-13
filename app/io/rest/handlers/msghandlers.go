@@ -1,145 +1,194 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/git-sim/tc/app/usecase"
+	"github.com/go-chi/chi"
 )
 
-// HandleMessage handler - Allows POSTing messages to the system, and reading a message given an id
-func HandleMessage(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.AccountUsecase) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		setupCORS(w, r)
-		accIDString, ok, auth := getAccIDFromSession(u, r)
-		if !auth || !ok {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+// MessageCtxFunc returns a context handler to validate the message ID exists
+func MessageCtxFunc(ufo usecase.FoldersUsecase) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			urlMessageID := chi.URLParam(r, "messageID")
+			msgID, err := usecase.ToMsgID(urlMessageID)
+			if err != nil {
+				ReportUsecaseFault(w, err)
+				return
+			}
+
+			v := r.Context().Value("dbAccountID")
+			accountID, ok := v.(usecase.AccountIDType)
+			if !ok {
+				//context wasn't set right
+				http.Error(w, "MessageCtxFunc AccountID context type assert failed",
+					http.StatusInternalServerError)
+				return
+			}
+
+			msg, err := ufo.GetOneMsg(accountID, msgID)
+			if err != nil && msg != nil {
+				fmt.Printf("AccountCtxFunc Message Not found AccountID %d MessageID Not found %s\n", accountID, urlMessageID)
+				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+				return
+			}
+
+			// Save away the message and the message ID for this request so
+			ctx := context.WithValue(r.Context(), "dbMsgID", msgID)
+			ctx2 := context.WithValue(ctx, "message", msg)
+			next.ServeHTTP(w, r.WithContext(ctx2))
+		})
+	}
+}
+
+// CreateMessage ...
+func CreateMessage(mu usecase.MsgUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Decode
+		var inmsg usecase.IngressMsg
+		err := decodeJSONBody(w, r, &inmsg)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+			}
 			return
 		}
 
-		switch r.Method {
-		case http.MethodPost:
-			d := json.NewDecoder(r.Body)
-			d.DisallowUnknownFields() // catch unwanted fields
-
-			inmsg := &usecase.IngressMsg{}
-			err := d.Decode(inmsg)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			//Enq the message
-			outmsgid, err := mu.EnqueueMsg(inmsg)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			// todo returning the ingested message in the response, could just
-			//    return the id for brevity. The client can get the whole message if they want it.
-			outmsg, err := mu.RetrieveMsg(outmsgid)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			err = json.NewEncoder(w).Encode(&outmsg)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		case http.MethodGet:
-			r.ParseForm()
-			msgIDString := r.FormValue("msgid")
-			mid, err := parseIDStringAndReportErr(w, accIDString, msgIDString)
-			if err != nil {
-				return //error already reported
-			}
-
-			outmsg, err := mu.RetrieveMsg(usecase.MsgIDType(mid))
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
-				return
-			}
-
-			err = json.NewEncoder(w).Encode(&outmsg)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		case http.MethodPut:
-			// Puts are control messages such as:
-			//    marking a message as viewed,starred
-			//    moving a message to a different folder a message
-			// Fields for a put are
-			//    Mark As Viewed, Starred
-			//        msgid: string base16 specifies the message id
-			//        viewed:    0|1
-			//        starred:   0|1
-			//    Move to folder
-			//        msgid: same as above
-			//        dest: {0|inbox, 1|archive, 2|sent, 3|scheduled}
-			r.ParseForm()
-			msgIDString := r.FormValue("msgid")
-			mid, err := parseIDStringAndReportErr(w, accIDString, msgIDString)
-			if err != nil {
-				return //error already reported
-			}
-
-			accID, err := usecase.ToAccountID(accIDString)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			if formval, ok := r.Form["viewed"]; ok {
-				newval := (formval[0] == "1")
-				ufo.UpdateViewed(accID, mid, newval)
-			}
-
-			if formval, ok := r.Form["starred"]; ok {
-				newval := (formval[0] == "1")
-				ufo.UpdateStarred(accID, mid, newval)
-			}
-
-			if formval, ok := r.Form["dest"]; ok {
-				if formval[0] == "1" {
-					err = ufo.ArchiveMsg(accID, mid)
-				}
-				if formval[0] == "0" {
-					err = ufo.UnArchiveMsg(accID, mid)
-				}
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-			}
-
-			// Todo handle Move to Folder Operation
-		case http.MethodDelete:
-			r.ParseForm()
-			msgIDString := r.FormValue("msgid")
-			mid, err := parseIDStringAndReportErr(w, accIDString, msgIDString)
-			if err != nil {
-				return //error already reported
-			}
-
-			accID, err := usecase.ToAccountID(accIDString)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			err = ufo.DeleteMsg(accID, mid)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		case http.MethodOptions:
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		//Enq the message
+		outmsgid, err := mu.EnqueueMsg(&inmsg)
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
 		}
-	})
+
+		// Returning the ingested message in the response, could just
+		//    return the id for brevity. The client can get the whole message if they want it.
+		outmsg, err := mu.RetrieveMsg(outmsgid)
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(&outmsg)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// GetMessages ...
+//func GetMessages(mu usecase.MsgUsecase, ufo usecase.FoldersUsecase, u usecase.AccountUsecase) http.HandlerFunc {
+//
+//}
+
+// GetMessage ... this could just be a HandlerFunc but keeping it for symmetry and if we need to add params
+func GetMessage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// The message is already cached in the context for this request
+		// extract and encode it
+		outmsg, ok := getMsgFromContext(w, r)
+		if !ok {
+			return
+		}
+		err := json.NewEncoder(w).Encode(&outmsg)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// PutMessage ...
+func PutMessage(ufo usecase.FoldersUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// The message is already cached in the context for this request
+		// extract, modify, update  (concurrency?)
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		msgID, ok := getMsgIDFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		// Decode body
+		var inmsg usecase.MsgEntry
+		err := decodeJSONBody(w, r, &inmsg)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+			}
+			return
+		}
+
+		err = ufo.UpdateMsg(accountID, msgID, inmsg)
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		outmsg, err := ufo.GetOneMsg(accountID, msgID)
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(outmsg)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// DeleteMessage ...
+func DeleteMessage(ufo usecase.FoldersUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		msgID, ok := getMsgIDFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		outmsg, ok := getMsgFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		// finally we're ready to delete
+		err := ufo.DeleteMsg(accountID, msgID)
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		// Sendback the message that's been deleted
+		err = json.NewEncoder(w).Encode(&outmsg)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
 }
 
 // Helpers

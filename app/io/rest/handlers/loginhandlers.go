@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/git-sim/tc/app/usecase"
@@ -20,65 +20,69 @@ func exampleSessionID(us usecase.SessionUsecase, r *http.Request, w http.Respons
 	return
 }
 
-// HandleLogin - handles logging in or registering a new account
-func HandleLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		setupCORS(w, r)
-		switch r.Method {
-		case http.MethodPost:
-			r.ParseForm()
-			email := r.FormValue("email")
-			if email == "" {
-				http.Error(w, "missing email in request", http.StatusBadRequest)
-				return
+func PostLogin(us usecase.SessionUsecase, u usecase.AccountUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// The account is a post body param encoded as JSON
+		// Need to ensure the email is unique
+		// ignore the id since a new one will be assigned
+		var account usecase.Account
+		err := decodeJSONBody(w, r, &account)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
 			}
-
-			session, _ := us.FromReq(r)
-
-			acc, err := u.GetAccountByEmail(email)
-			if err != nil {
-				es, ok := err.(*usecase.ErrStat)
-				if ok && es.Code == usecase.EsNotFound {
-					// Doesn't exist create new account
-					acc, err = u.RegisterAccountByEmail(email)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						fmt.Fprintf(w, "err: %s\n", err.Error())
-						return
-					}
-					//w.WriteHeader(http.StatusCreated) //the cookie is set iff StatusOk
-				} else {
-					http.Error(w, "Error while retrieving account", http.StatusInternalServerError)
-					fmt.Fprintf(w, "err: %s\n", err.Error())
-					return
-				}
-			}
-			if acc != nil {
-
-				// Any real authentication would potentially go here
-				session.Values["authenticated"] = true
-				session.Values["id"] = acc.ID
-				session.Save(r, w)
-
-				err = json.NewEncoder(w).Encode(acc)
-			}
-
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
 		}
 
-	})
+		email := account.Email
+		if email == "" {
+			http.Error(w, "Email not specified", http.StatusBadRequest)
+			return
+		}
+
+		r.ParseForm()
+		session, _ := us.FromReq(r)
+
+		acc, err := u.GetAccountByEmail(email)
+		if err != nil {
+			es, ok := err.(*usecase.ErrStat)
+			if ok && es.Code == usecase.EsNotFound {
+				// Doesn't exist create new account
+				acc, err = u.RegisterAccountByEmail(email)
+				if err != nil {
+					ReportUsecaseFault(w, err)
+					return
+				}
+				//w.WriteHeader(http.StatusCreated) //the cookie is set iff StatusOk
+			} else {
+				ReportUsecaseFault(w, err)
+				return
+			}
+		}
+		if acc != nil {
+
+			// Any real authentication would potentially go here
+			session.Values["authenticated"] = true
+			session.Values["id"] = acc.ID
+			session.Save(r, w)
+
+			err = json.NewEncoder(w).Encode(acc)
+		}
+	}
 }
 
-// HandleLogout clears out the session id
-func HandleLogout(us usecase.SessionUsecase) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		setupCORS(w, r)
+// PostLogout clears out the session id
+func PostLogout(us usecase.SessionUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		session, _ := us.FromReq(r)
 
 		session.Values["authenticated"] = false
 		session.Values["id"] = ""
 		session.Save(r, w)
-	})
+	}
 }

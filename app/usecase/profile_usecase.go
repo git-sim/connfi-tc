@@ -1,110 +1,63 @@
 package usecase
+
 import (
-    "fmt"
-    "github.com/git-sim/tc/app/domain/repo"
-    "image"
-    "log"
+	"fmt"
+	"image/png"
+	"log"
+	"os"
+
+	"github.com/git-sim/tc/app/domain/repo"
 )
 
-type profileStringUsecase struct {
-    profileRepo repo.StringRepo
+type profileUsecase struct {
+	profileRepo repo.ProfileRepo
 }
 
-//Note internal function not exported
-func NewProfileStringUsecase(nr repo.StringRepo) *profileStringUsecase {
-    // should be an assert
-    if nr==nil {
-        log.Fatal(fmt.Errorf("invalid repo.StringRepo")) 
-    }
-    u := &profileStringUsecase {profileRepo: nr }
-    return u
+func NewProfileUsecase(pr repo.ProfileRepo) ProfileUsecase {
+	// should be an assert
+	if pr == nil {
+		log.Fatal(fmt.Errorf("invalid repo.ProfileRepo"))
+	}
+	u := &profileUsecase{profileRepo: pr}
+	return u
 }
 
-func (u *profileStringUsecase) Set(id uint64, val string) error {
-    _ , err := u.profileRepo.Retrieve(id)
-    if err != nil {
-        // Create
-        err = u.profileRepo.Create(id, val)
-    } else {
-        // Update
-        err = u.profileRepo.Update(id, val)
-    }
-    return err
+func (pu *profileUsecase) Set(id uint64, val *repo.PublicProfile) error {
+	// Update
+	return pu.profileRepo.Update(id, val)
 }
 
-func (u *profileStringUsecase) Get(id uint64) (string, error) {
-    val , err := u.profileRepo.Retrieve(id)
-    if err != nil {
-        return "", err
-    }
-    return val, nil
+func (pu *profileUsecase) Get(id uint64) (*repo.PublicProfile, error) {
+	return pu.profileRepo.Retrieve(id)
 }
 
-func (u *profileStringUsecase) GetCount() (int, error) {
-    count , err := u.profileRepo.RetrieveCount()
-    if err != nil {
-        return 0, err
-    }
-    return count, nil
+func (pu *profileUsecase) GetCount() (int, error) {
+	return pu.profileRepo.RetrieveCount()
 }
 
-func (u *profileStringUsecase) GetList() ([]*string, error) {
-    currval , err := u.profileRepo.RetrieveAll()
-    if err != nil {
-        return []*string{}, err
-    }
-    return currval, nil
+func (pu *profileUsecase) Delete(id uint64) error {
+	return pu.profileRepo.Delete(id)
 }
 
-// Impl of Profile Image Usecase
-type profileImageUsecase struct {
-    profileRepo    repo.ImageRepo
-}
+func (pu *profileUsecase) CreateDefaultProfile(id uint64) error {
+	p := repo.PublicProfile{}
+	p.NameAndBios[repo.EnumBio] = "No Bio Recorded"
+	defaultAvatar, err := os.Open("./testdata/img1.png")
+	if err == nil {
+		defer defaultAvatar.Close()
+		avImage, err := png.Decode(defaultAvatar)
+		if err == nil {
+			p.Pics[repo.EnumAvatar] = &avImage
+		}
+	}
 
-func NewProfileImageUsecase(ir repo.ImageRepo) *profileImageUsecase {
-    // should be a compile time assert
-    if ir==nil {
-        log.Fatal(fmt.Errorf("invalid repo.ImageRepo"))
-    }
-    u := &profileImageUsecase {
-        profileRepo: ir,
-    }
-    return u
+	defaultBg, err := os.Open("./testdata/img2.png")
+	if err == nil {
+		defer defaultBg.Close()
+		bgImage, err := png.Decode(defaultBg)
+		if err == nil {
+			p.Pics[repo.EnumBackground] = &bgImage
+		}
+	}
+	return pu.profileRepo.Create(id, &p)
 }
-
-func (u *profileImageUsecase) Set(id uint64, val *image.Image) error {
-    _ , err := u.profileRepo.Retrieve(id)
-    if err != nil  {
-        // Create
-        err = u.profileRepo.Create(id, val)
-    } else {
-        // Update
-        err = u.profileRepo.Update(id, val)
-    }
-    return err
-}
-
-func (u *profileImageUsecase) Get(id uint64) (*image.Image, error) {
-    currval , err := u.profileRepo.Retrieve(id)
-    if err != nil {
-        return nil, err
-    }
-    return currval, nil
-}
-
-func (u *profileImageUsecase) GetCount() (int, error) {
-    currval , err := u.profileRepo.RetrieveCount()
-    if err != nil {
-        return 0, err
-    }
-    return currval, nil
-}
-
-func (u *profileImageUsecase) GetList() ([]*image.Image, error) {
-    currval , err := u.profileRepo.RetrieveAll()
-    if err != nil {
-        return nil, err
-    }
-    return currval, nil
-}
-

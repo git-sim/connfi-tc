@@ -18,31 +18,31 @@ const ThreadIDStringBase = 16
 
 // MsgBase basic type coming into the system
 type MsgBase struct {
-	ParentMid   MsgIDType
-	CreatedAt   time.Time
-	ScheduledAt time.Time
-	SenderEmail string
-	Recipients  []string
-	Subject     string
-	Body        []byte
+	ParentMid   MsgIDType `json:"parentmsgid"`
+	CreatedAt   time.Time `json:"createdat"`
+	ScheduledAt time.Time `json:"scheduledat"`
+	SenderEmail string    `json:"senderemail"`
+	Recipients  []string  `json:"recipients"`
+	Subject     string    `json:"subject"`
+	Body        []byte    `json:"body"`
 }
 
 // Msg type with system generated metadata attached more appropiate for storage
 type Msg struct {
-	Mid      MsgIDType
-	Tid      ThreadIDType
-	SentAt   time.Time
-	SenderID AccountIDType
+	Mid      MsgIDType     `json:"msgid"`
+	Tid      ThreadIDType  `json:"threadid"`
+	SentAt   time.Time     `json:"sentat"`
+	SenderID AccountIDType `json:"senderid"`
 	M        MsgBase
 }
 
 // MsgEntry this is the decorated type used in Message Folders (inbox, archive, etc)
 type MsgEntry struct {
-	Mid       MsgIDType
-	ViewedAt  time.Time
-	IsViewed  bool
-	IsStarred bool
-	Folder    string
+	Mid       MsgIDType `json:"msgid"`
+	ViewedAt  time.Time `json:"viewedat"`
+	IsViewed  bool      `json:"isviewed"`
+	IsStarred bool      `json:"isstarred"`
+	Folder    string    `json:"foldername"`
 	M         Msg
 }
 

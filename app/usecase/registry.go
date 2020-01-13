@@ -16,12 +16,12 @@ func InitAccounts(accUsecase AccountUsecase) error {
 
 // InitSubscribers called at bootup
 func InitSubscribers(accServ *service.AccountService, folUsecase FoldersUsecase,
-	accUsecase AccountUsecase, dbPendingMsgs repo.Generic) error {
-	err := initRegisterAccountSubsribers(accServ, folUsecase, accUsecase, dbPendingMsgs)
+	accUsecase AccountUsecase, profUsecase ProfileUsecase, dbPendingMsgs repo.Generic) error {
+	err := initRegisterAccountSubsribers(accServ, folUsecase, accUsecase, profUsecase, dbPendingMsgs)
 	if err != nil {
 		return err
 	}
-	err = initDeleteAccountSubsribers(accServ, folUsecase, accUsecase)
+	err = initDeleteAccountSubsribers(accServ, folUsecase, accUsecase, profUsecase)
 	if err != nil {
 		return err
 	}
@@ -34,12 +34,18 @@ func InitSubscribers(accServ *service.AccountService, folUsecase FoldersUsecase,
 }
 
 func initRegisterAccountSubsribers(accServ *service.AccountService, folUsecase FoldersUsecase,
-	accUsecase AccountUsecase, dbPendingMsgs repo.Generic) error {
+	accUsecase AccountUsecase, profUsecase ProfileUsecase, dbPendingMsgs repo.Generic) error {
 
 	accServ.SubscribeRegisterAccount(
 		func(acc entity.Account) {
 			// Create the new folders for the user
 			folUsecase.CreateNewFolders(acc)
+		})
+
+	accServ.SubscribeRegisterAccount(
+		func(acc entity.Account) {
+			// Create the new folders for the user
+			profUsecase.CreateDefaultProfile(uint64(acc.GetID()))
 		})
 
 	accServ.SubscribeRegisterAccount(
@@ -69,8 +75,15 @@ func initRegisterAccountSubsribers(accServ *service.AccountService, folUsecase F
 }
 
 func initDeleteAccountSubsribers(accServ *service.AccountService, folUsecase FoldersUsecase,
-	accUsecase AccountUsecase) error {
-	return nil //tbd
+	accUsecase AccountUsecase, profUsecase ProfileUsecase) error {
+
+	accServ.SubscribeDeleteAccount(
+		func(acc entity.Account) {
+			//Delete the profile
+			profUsecase.Delete(uint64(acc.GetID()))
+		})
+
+	return nil
 }
 func initEnqueueMsgSubsribers(accServ *service.AccountService, folUsecase FoldersUsecase,
 	accUsecase AccountUsecase) error {

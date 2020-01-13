@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"strings"
 	"time"
 
 	"github.com/git-sim/tc/app/domain/entity"
@@ -26,6 +27,22 @@ func FolderText(code int) string {
 	return folderText[code]
 }
 
+var folderEnum = map[string]int{
+	"inbox":     EnumInbox,
+	"archive":   EnumArchive,
+	"sent":      EnumSent,
+	"scheduled": EnumScheduled,
+}
+
+// FolderEnum returns empty string if invalid
+func FolderEnum(in string) int {
+	v, ok := folderEnum[strings.ToLower(in)]
+	if !ok {
+		return EnumInbox
+	}
+	return v
+}
+
 const (
 	EnumSortByTime = iota
 	EnumSortBySubject
@@ -45,28 +62,35 @@ func SortText(code int) string {
 }
 
 type QueryParams struct {
-	FolderIdx int
-	SortBy    int
-	SortOrder int
-	Limit     int
-	Page      int
+	FolderIdx int `json:"folderid"`
+	SortBy    int `json:"sort"`
+	SortOrder int `json:"sortorder"`
+	Limit     int `json:"limit"`
+	Page      int `json:"page"`
 }
 
 type MsgQueryOutput struct {
 	Requested   QueryParams
-	QueriedAt   time.Time
-	FolderName  string
-	NumTotal    int
-	NumUnviewed int
-	NumElems    int //in the folder
-	Elems       []MsgEntry
+	QueriedAt   time.Time  `json:"queriedat"`
+	FolderName  string     `json:"foldername"`
+	NumTotal    int        `json:"numtotal"`
+	NumUnviewed int        `json:"numunviewed"`
+	NumElems    int        `json:"numelems"`
+	Elems       []MsgEntry `json:"elems"`
+}
+
+type FolderInfoOutput struct {
+	FolderIdx  int    `json:"folderid"`
+	FolderName string `json:"foldername"`
+	NumTotal   int    `json:"numtotal"`
 }
 
 // FoldersUsecase handles folder management
 type FoldersUsecase interface {
 
-	// Controller related functionality
+	// Controller related functionality ---
 	AddToFolder(folderEnum int, id AccountIDType, msg MsgEntry) error
+	UpdateMsg(id AccountIDType, mid MsgIDType, msg MsgEntry) error
 
 	UpdateViewed(id AccountIDType, mid MsgIDType, newval bool) error
 	UpdateStarred(id AccountIDType, mid MsgIDType, newval bool) error
@@ -74,13 +98,14 @@ type FoldersUsecase interface {
 	UnArchiveMsg(id AccountIDType, mid MsgIDType) error
 	DeleteMsg(id AccountIDType, mid MsgIDType) error
 
-	// Presenter Functions
+	// Presenter Functions ---
 	QueryMsgs(id AccountIDType, qp QueryParams) (*MsgQueryOutput, error)
-	//QueryThreads()
+	GetOneMsg(aID AccountIDType, mID MsgIDType) (*MsgEntry, error)
 
 	//List
+	GetFolderInfo(id AccountIDType) ([]FolderInfoOutput, error)
 
-	// For use by the system
+	// For use by the system ---
 	//CreateNewFolders ... called by NofityNewAccount
 	CreateNewFolders(acc entity.Account) error
 	//Delete

@@ -60,11 +60,11 @@ There are 3 regions separated by boundaries.
 
 <ul><li>PUT /accounts/{accountID}</li>
   <ul><li> Updates the account info   </li>
-      <li> Input: N{firstname, lastname} id and email are ignored   </li>
+      <li> Input: {firstname, lastname} id and email are ignored   </li>
       <li> Output: none</li></ul></ul>
 
 <ul><li>DELETE /accounts/{accountID}</li>
-  <ul><li> Delete account </li>
+  <ul><li> Delete account. In general shouldn't allow this except for admin purposes. REST API should handle it, if an account gets deleted the URL quits working. A true impl should force logout any active sessions during the notify then delete</li>
       <li> Input: none</li>
       <li> Output: none</li></ul></ul>
 
@@ -73,7 +73,7 @@ There are 3 regions separated by boundaries.
   <ul><li> Returns list of folders  </li>
       <li> Input: none  </li>
       <li> Output: {FolderInfo[]}  </li>
-      <ul><li> where FolderInfo:= {FolderName, Idx, NumTotal, NumUnviewed} </li></ul></ul></ul>
+      <ul><li> where FolderInfo:= {folderid int, foldername string} </li></ul></ul></ul>
 
 <ul><li> GET /accounts/{accountID}/folders/{folderID}  </li>
   <ul><li> Returns the messages in a folder sorted/limited/paged for the frontend. limit and page work to specify a window of messages to retrieve. Page size is specified by limit. So {Limit:10,Page:0} gives the first 10 messages.  {Limit:10,Page:1} gives the next 10. The Messages[] array may be fewer than limit (or even empty) if the span set by Page,Limit exceeds the number of actual messages. Front end can use FolderInfo.NumTotal to control the request. </li>
@@ -81,7 +81,7 @@ There are 3 regions separated by boundaries.
       <ul><li> ?[limit=n]  </li>
           <li> &[page=n]  </li>
           <li> &[sortorder=<strong>-1</strong>|1]  </li>
-          <li> &[sort=<strong>time</strong>|sender|subject]  </li></ul>
+          <li> &[sort=<strong>0:time</strong>|1:subject|2:sender]  </li></ul>
       <li> Output: {HeaderInfo, Messages[]}  </li>
         <ul><li> where HeaderInfo is {{InputQueryParams}, FolderInfo} </li></ul></ul></ul>
 
@@ -92,7 +92,7 @@ There are 3 regions separated by boundaries.
       <li> Input:  message as body param  </li>
       <li> Output: Returns message id of created message  </li></ul></ul>
 
-<ul><li> GET /accounts/{accountID}/messages  </li>
+<ul><li> GET /accounts/{accountID}/messages  <strong>NOT IMPLEMENTED</strong></li>
   <ul><li> List of messages limit and offset are optional. If not specified means all messages.    </li>
       <li> Input:  </li>
       <ul><li> [?limit=n&offset=n]  </li></ul>
@@ -112,9 +112,9 @@ There are 3 regions separated by boundaries.
 <ul><li> DELETE /accounts/{accountID}/messages/{messageID}  </li>
   <ul><li> Deletes a message  </li>
       <li> Input:  none  </li>
-      <li> Output: none  </li></ul></ul>
+      <li> Output: Deleted Message  </li></ul></ul>
 
-#### threads: Used for displaying messages as threads. Possibly move to under folders.
+#### NOT IMPLEMENTED threads: Used for displaying messages as threads. Possibly move to under folders. 
 <ul><li> GET /accounts/{accountID}/threads</li>
   <ul><li> Returns list of threadInfos for the account    </li>
       <li> Input: limit and offset are optional, means all if omitted  </li>
@@ -133,15 +133,11 @@ There are 3 regions separated by boundaries.
     <ul><li> Deletes all the messages in the thread   </li></ul></ul>
  
 #### profile: Get/Set the profile for a user.  Broken out by fields to encourage use of the individual requrests. Since the profile may get data/added removed keeps the API the the least coupled if clients ask for the profile fields by name instead of the whole profile. 
-<ul><li> GET /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  </li>
+<ul><li> GET /account/{accountID}/profile </li>
   <ul><li> Returns the entire profile  </li>
       <li> Input: none  </li>
       <li> Output: {Profile}  </li>
-      <ul><li> where Profile:= {ID, name, bio, avatarImg, bgImg }  </li></ul></ul></ul>
-<ul><li> GET /account/{accountID}/profile/name  </li>
-  <ul><li> Returns name string  </li>
-      <li> Input: none  </li>
-      <li> Output: {name}  </li></ul></ul>
+      <ul><li> where Profile:= {ID, bio, avatarImg, bgImg }  </li></ul></ul></ul>
 <ul><li> GET /account/{accountID}/profile/bio  </li>
   <ul><li> Returns bio string  </li>  
       <li> Input: none  </li>
@@ -155,15 +151,11 @@ There are 3 regions separated by boundaries.
       <li> Input: none  </li>
       <li> Output: {bg}  </li></ul></ul>
 PUT's should be symmetric to the gets above 
-<ul><li> PUT /account/{accountID}/profile  DEPRECATED  use the individual fields in the url  </li>
+<ul><li> PUT /account/{accountID}/profile  </li>
   <ul><li> Sets the entire profile  </li>    
       <li> Input: {Profile}  </li>
       <ul><li> where Profile:= {ID, name, bio, avatarImg, bgImg }  </li></ul>
       <li> Output:  none  </li></ul></ul>
-<ul><li> PUT /account/{accountID}/profile/name   </li>
-  <ul><li> Sets name string  </li>
-      <li> Input: {name}  </li>
-      <li> Output: none   </li></ul></ul>
 <ul><li> PUT /account/{accountID}/profile/bio  </li>
   <ul><li> Sets bio string  </li>
       <li> Input: {bio}  </li>

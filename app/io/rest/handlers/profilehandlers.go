@@ -1,200 +1,259 @@
 package handlers
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
+	"errors"
+	"image"
 	"net/http"
-	"strconv"
 
-	"github.com/git-sim/tc/app/domain/entity"
+	"github.com/git-sim/tc/app/domain/repo"
+
 	"github.com/git-sim/tc/app/usecase"
 )
 
-// The pattern in this code is String based profile fields then Image based profile fields (others if they come alone)
-// todo split the two in to separate files?
-// Much of the code is very similar, haven't found a way in go to share the code between string and image fields (generics?).
-// This is ok since images and strings don't meet the Liskov Substitutability
-const (
-	EnumFirstNameUsecase = iota
-	EnumLastNameUsecase
-	EnumBioUsecase
-	EnumNumStringUsecases
-)
-
-const (
-	EnumAvatarImageUsecase = iota
-	EnumBgImageUsecase
-	EnumNumImageUsecases
-)
-
-type ProfileUsecases struct {
-	StrUsecases   [EnumNumStringUsecases]usecase.ProfileStringUsecase
-	ImageUsecases [EnumNumImageUsecases]usecase.ProfileImageUsecase
-}
-
-var StringFields = [...]string{
-	"firstname",
-	"lastname",
-	"bio",
-}
-
-var ImageFields = [...]string{
-	"avatarimage",
-	"bgimage",
-}
-
-// Helper function to parse the fields in an http request and call the usecase function
-func parseAndSetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string, u *ProfileUsecases, w http.ResponseWriter, r *http.Request) (numParsed int, numErrors int) {
-	numParsed = 0
-	numErrors = 0
-	for i, k := range fields {
-		if val, found := r.Form[k]; found {
-			err := u.StrUsecases[i].Set(id64, val[0])
-			numParsed++
-			if err != nil {
-				http.Error(w, "err in handleProfile string field", http.StatusBadRequest)
-				numErrors++
-				// report all errors
-			}
-		}
-	}
-	return numParsed, numErrors
-}
-
-func parseAndGetStringUsecase(id64 uint64, fields [EnumNumStringUsecases]string, u *ProfileUsecases, w http.ResponseWriter, r *http.Request) (numParsed int, numErrors int) {
-	numParsed = 0
-	numErrors = 0
-	for i, k := range fields {
-		if _, found := r.Form[k]; found {
-			val, err := u.StrUsecases[i].Get(id64)
-			numParsed++
-			if err != nil {
-				http.Error(w, "err in get handleProfile string field", http.StatusBadRequest)
-				numErrors++
-				// report all errors
-			}
-			_, _ = fmt.Fprintf(w, "%s\n", val) //todo json instead
-		}
-	}
-	return numParsed, numErrors
-}
-
-//func parseAndSetImageUsecase(id64 uint64, fields [EnumNumImageUsecases]string,u *ProfileUsecases, w http.ResponseWriter, r *http.Request) (numParsed int, numErrors int) {
-//    numParsed = 0
-//    numErrors = 0
-//    for i,k := range fields {
-//        val := r.URL.Query().Get(k)
-//        if val != nil {
-//            numParsed++
-//            err := u.ImageUsecases[i].Set(id64,val)
-//            if err != nil {
-//                http.Error(w, "err in handleProfile image field",http.StatusBadRequest)
-//                numErrors++
-//                // report all errors
-//            }
-//        }
-//   }
-//    return numParsed, numErrors
-//}
-
-func HandleProfile(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		setupCORS(w, r)
-		r.ParseForm()
-		email := r.FormValue("email")
-		if email == "" {
-			http.Error(w, "missing email", http.StatusBadRequest)
-			return
-		}
-
-		account, err := accu.GetAccountByEmail(email)
-		if err != nil {
-			http.Error(w, "email not found", http.StatusBadRequest)
-			return
-		}
-
-		id64, err := strconv.ParseUint(account.ID,
-			entity.AccountIDStringBase,
-			entity.AccountIDBits)
-		if err != nil {
-			http.Error(w, "id lookup failed HandlerProfile", http.StatusInternalServerError)
-			return
-		}
-
-		switch r.Method {
-		case http.MethodPost:
-			numStrsParsed, numStrsErrors := parseAndSetStringUsecase(id64, StringFields, u, w, r)
-			//          numImagesParsed, numImagesErrors := parseAndSetImageUsecase(id64,ImageFields,u,w,r)
-			if numStrsParsed-numStrsErrors > 0 /*|| (numImagesParsed - numImagesErrors > 0)*/ {
-				w.WriteHeader(http.StatusCreated)
-			}
-
-		case http.MethodDelete:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			// todo allow delete?
-
-		case http.MethodGet:
-			numStrsParsed, numStrsErrors := parseAndGetStringUsecase(id64, StringFields, u, w, r)
-			if numStrsParsed > 0 && numStrsErrors == 0 {
-				w.WriteHeader(http.StatusOK)
-			}
-
-		case http.MethodPut:
-			numStrsParsed, numStrsErrors := parseAndSetStringUsecase(id64, StringFields, u, w, r)
-			numImagesParsed := 0 //todo when images are working
-			numImagesErrors := 0 //todo images
-			//numImagesParsed, numImagesErrors := parseAndSetImageUsecase(id64,ImageFields,u,w,r) //todo images
-			if (numStrsErrors+numImagesErrors == 0) && (numStrsParsed+numImagesParsed > 0) {
-				// we parsed at least 1 field, and there were not errors
-				w.WriteHeader(http.StatusOK)
-			}
-
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-
-	})
-}
-
-func HandleProfileList(accu usecase.AccountUsecase, u *ProfileUsecases) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		setupCORS(w, r)
-		switch r.Method {
-		case http.MethodGet:
-			accs, err := accu.GetAccountList()
-			if err != nil {
-				http.Error(w, "email not found", http.StatusNotFound)
+// ProfileCtxFunc returns a context handler to validate the accountID exists, and is registered
+func ProfileCtxFunc(pu usecase.ProfileUsecase) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			accountID, ok := getAccountIDFromContext(w, r)
+			if !ok {
 				return
 			}
-			maxcount := len(accs)
 
-			// loop through and return each field requested
-			_, _ = fmt.Fprintf(w, "MaxCount: %d", maxcount)
-			for _, acc := range accs { //todo need some sensible sorting
-				_, _ = fmt.Fprintf(w, "id: %s, email: %s", acc.ID, acc.Email)
-				for i, field := range StringFields {
-					if _, found := r.Form[field]; found {
-						_, _ = fmt.Fprintf(w, ", %s: %s", field, u.StrUsecases[i])
-					} else {
-						// field not defined in the profile return a place holder
-						_, _ = fmt.Fprintf(w, ", %s: %s", field, "")
-					}
-				}
-				_, _ = fmt.Fprintf(w, "\n") //todo do as json instead of fprinting
-
-				// todo images would go here either multipart/binary/urlencoded however its done in http
-				for /*i*/ _, field := range ImageFields {
-					if _, found := r.Form[field]; found {
-						//_,_ = fmt.Fprintf(w,", %s: %s",field,u.ImageUsecases[i])
-					} else {
-						// todo no image defined case
-					}
-				}
-				_, _ = fmt.Fprintf(w, "\n") //todo do as json instead of fprinting
+			profile, err := pu.Get(uint64(accountID))
+			if err != nil || profile == nil {
+				ReportUsecaseFault(w, err)
+				return
 			}
-			w.WriteHeader(http.StatusOK)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+			ctx := context.WithValue(r.Context(), "profile", profile)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// GetProfile ...
+func GetProfile(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
 		}
 
-	})
+		prof, err := pu.Get(uint64(accountID))
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(prof)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// PutProfile ...
+func PutProfile(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// The message is already cached in the context for this request
+		// extract, modify, update  (concurrency?)
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		// Decode body
+		var inprofile repo.PublicProfile
+		err := decodeJSONBody(w, r, &inprofile)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+			}
+			return
+		}
+
+		err = pu.Set(uint64(accountID), &inprofile)
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		outprofile, err := pu.Get(uint64(accountID))
+		if err != nil {
+			ReportUsecaseFault(w, err)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(outprofile)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+type profileJustBio struct {
+	Bio string `json:"bio"`
+}
+
+// GetProfileBio ...
+func GetProfileBio(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		profile, ok := getProfileFromContext(w, r)
+		if !ok {
+			return
+		}
+		out := profileJustBio{Bio: profile.NameAndBios[repo.EnumBio]}
+		err := json.NewEncoder(w).Encode(&out)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// PutProfileBio ...
+func PutProfileBio(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
+		}
+		profile, ok := getProfileFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		// Decode body
+		var inprofile profileJustBio
+		err := decodeJSONBody(w, r, &inprofile)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+			}
+			return
+		}
+		profile.NameAndBios[repo.EnumBio] = inprofile.Bio
+		pu.Set(uint64(accountID), profile)
+	}
+}
+
+type profileJustAvatar struct {
+	Avatar image.Image `json:"avatar"`
+}
+
+// GetProfileAvatar ...
+func GetProfileAvatar(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		profile, ok := getProfileFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		out := profileJustAvatar{}
+		if profile.Pics[repo.EnumAvatar] != nil {
+			out.Avatar = *profile.Pics[repo.EnumAvatar]
+		}
+
+		err := json.NewEncoder(w).Encode(&out)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// PutProfileAvatar ...
+func PutProfileAvatar(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
+		}
+		profile, ok := getProfileFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		// Decode body
+		var inprofile profileJustAvatar
+		err := decodeJSONBody(w, r, &inprofile)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+			}
+			return
+		}
+		profile.Pics[repo.EnumAvatar] = &inprofile.Avatar
+		pu.Set(uint64(accountID), profile)
+	}
+}
+
+type profileJustBg struct {
+	Background image.Image `json:"background"`
+}
+
+// GetProfileBackground ...
+func GetProfileBackground(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		profile, ok := getProfileFromContext(w, r)
+		if !ok {
+			return
+		}
+		out := profileJustBg{}
+		if profile.Pics[repo.EnumBackground] != nil {
+			out.Background = *profile.Pics[repo.EnumBackground]
+		}
+
+		err := json.NewEncoder(w).Encode(&out)
+		if err != nil {
+			ReportJSONFault(w, err)
+			return
+		}
+	}
+}
+
+// PutProfileBackground ...
+func PutProfileBackground(pu usecase.ProfileUsecase) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accountID, ok := getAccountIDFromContext(w, r)
+		if !ok {
+			return
+		}
+		profile, ok := getProfileFromContext(w, r)
+		if !ok {
+			return
+		}
+
+		// Decode body
+		var inprofile profileJustBg
+		err := decodeJSONBody(w, r, &inprofile)
+		if err != nil {
+			var es *ErrorJSONDecode
+			if errors.As(err, &es) {
+				http.Error(w, es.msg, es.status)
+			} else {
+				http.Error(w, http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError)
+			}
+			return
+		}
+		profile.Pics[repo.EnumBackground] = &inprofile.Background
+		pu.Set(uint64(accountID), profile)
+	}
 }

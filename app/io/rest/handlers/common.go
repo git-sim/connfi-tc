@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/git-sim/tc/app/domain/repo"
 	"github.com/git-sim/tc/app/usecase"
 )
 
@@ -29,6 +30,47 @@ func SetupCORSHandler(next http.Handler) http.Handler {
 		setupCORS(w, r)
 		next.ServeHTTP(w, r)
 	})
+}
+
+// Helpers for the boiler plate context/error checking
+func getAccountIDFromContext(w http.ResponseWriter, r *http.Request) (usecase.AccountIDType, bool) {
+	ctxAccountID := r.Context().Value("dbAccountID")
+	accountID, ok := ctxAccountID.(usecase.AccountIDType)
+	if !ok {
+		//context wasn't set right report the error
+		http.Error(w, "Account ID type assert failed", http.StatusInternalServerError)
+	}
+	return accountID, ok
+}
+
+func getMsgIDFromContext(w http.ResponseWriter, r *http.Request) (usecase.MsgIDType, bool) {
+	ctxMsgID := r.Context().Value("dbMsgID")
+	msgID, ok := ctxMsgID.(usecase.MsgIDType)
+	if !ok {
+		//context wasn't set right
+		http.Error(w, "Message ID type assert failed", http.StatusInternalServerError)
+	}
+	return msgID, ok
+}
+
+func getMsgFromContext(w http.ResponseWriter, r *http.Request) (usecase.MsgEntry, bool) {
+	ctxmsg := r.Context().Value("message")
+	outmsg, ok := ctxmsg.(usecase.MsgEntry)
+	if !ok {
+		//context wasn't set right
+		http.Error(w, "message type assert failed", http.StatusInternalServerError)
+	}
+	return outmsg, ok
+}
+
+func getProfileFromContext(w http.ResponseWriter, r *http.Request) (*repo.PublicProfile, bool) {
+	ctxval := r.Context().Value("profile")
+	outval, ok := ctxval.(*repo.PublicProfile)
+	if !ok {
+		//context wasn't set right
+		http.Error(w, "profile type assert failed", http.StatusInternalServerError)
+	}
+	return outval, ok
 }
 
 //The following method is from alexedwards.net/blog/how-to-properly-parse-a-json-request-body
@@ -163,7 +205,16 @@ func ErrStatToHTTPCode(es *usecase.ErrStat) int {
 // ReportJSONFault helper function to report an error with JSON, and do any debug logging to alert devs
 func ReportJSONFault(w http.ResponseWriter, err error) {
 	_, file, line, _ := runtime.Caller(1)
-	log.Printf("Debug file: %s line: %d Error: %s", file, line, err.Error())
+	log.Printf("Debug file: %s line: %d Error: %s\n", file, line, err.Error())
 
 	http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
+func ReportUsecaseFault(w http.ResponseWriter, err error) {
+	var es *usecase.ErrStat
+	if errors.As(err, &es) {
+		http.Error(w, es.Msg, ErrStatToHTTPCode(es))
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
